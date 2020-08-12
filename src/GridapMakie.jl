@@ -6,7 +6,7 @@ using Gridap
 using AbstractPlotting
 using AbstractPlotting: Plot
 
-using Gridap.Visualization
+using Gridap.Visualization: VisualizationData, Visualization
 using Gridap.ReferenceFEs
 using Gridap.Geometry
 using Gridap
@@ -36,35 +36,28 @@ function _unzip(itr)
     end
 end
 
-struct PDEPlot
-    visdata::Visualization.VisualizationData
+@recipe(PDEPlot, visualization_data) do scene
+    Theme()
 end
 
-function get_nodalvalues(o::PDEPlot)
-    get_nodalvalues(o.visdata)
-end
-function get_spacedim(o::PDEPlot)
-    get_spacedim(o.visdata)
-end
-function get_valuetype(o::PDEPlot)
-    get_valuetype(o.visdata)
-end
-function get_nodalvalues(o::Visualization.VisualizationData)
+AbstractPlotting.plottype(::VisualizationData) = PDEPlot
+
+function get_nodalvalues(o::VisualizationData)
     only(o.nodaldata).second
 end
-function get_spacedim(o::Visualization.VisualizationData)
+function get_spacedim(o::VisualizationData)
     num_dims(o.grid)
 end
-function get_valuetype(o::Visualization.VisualizationData)
+function get_valuetype(o::VisualizationData)
     typeof(first(get_nodalvalues(o)))
 end
 
-function AbstractPlotting.plot!(p::Plot(PDEPlot))
-    pdeplot = to_value(p[1])
-    valuetype = get_valuetype(pdeplot)
-    spacedim = Val(get_spacedim(pdeplot))
+function AbstractPlotting.plot!(p::PDEPlot{<:Tuple{VisualizationData}})
+    visdata = to_value(p[:visualization_data])::VisualizationData
+    valuetype = get_valuetype(visdata)
+    spacedim = Val(get_spacedim(visdata))
     kw = p.attributes
-    _plot_dispatch_spacedim_valuetype(p, pdeplot.visdata, spacedim, valuetype; kw...)
+    _plot_dispatch_spacedim_valuetype(p, visdata, spacedim, valuetype; kw...)
 end
 function _plot_dispatch_spacedim_valuetype(
     p,
@@ -98,13 +91,13 @@ function _plot_dispatch_spacedim(p, visdata, spacedim::Val{2};
     # wireframe!(p, visdata)
 end
 
-function AbstractPlotting.convert_arguments(P::Type{<:Lines}, visdata::Visualization.VisualizationData)
+function AbstractPlotting.convert_arguments(P::Type{<:Lines}, visdata::VisualizationData)
     _convert_arguments_for_lines(P, visdata, get_nodalvalues(visdata))
 end
-function AbstractPlotting.convert_arguments(P::Type{<:Arrows}, visdata::Visualization.VisualizationData)
+function AbstractPlotting.convert_arguments(P::Type{<:Arrows}, visdata::VisualizationData)
     _convert_arguments_for_quiver(P, visdata, get_nodalvalues(visdata))
 end
-function AbstractPlotting.convert_arguments(P::Type{<:Mesh}, visdata::Visualization.VisualizationData)
+function AbstractPlotting.convert_arguments(P::Type{<:Mesh}, visdata::VisualizationData)
     _convert_arguments_for_mesh(P, visdata, get_nodalvalues(visdata))
 end
 
@@ -195,7 +188,7 @@ function demo_visdata(;spacedim, valuetype)
     u = interpolate(V, f)
 
     trian = Triangulation(model)
-    visdata = visualization_data(trian, cellfields=Dict("u" =>u))
+    visdata = Visualization.visualization_data(trian, cellfields=Dict("u" =>u))
     return visdata
 end
 

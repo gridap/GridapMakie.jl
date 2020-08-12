@@ -2,14 +2,12 @@
 #
 import AbstractPlotting # hide
 AbstractPlotting.inline!(true) # hide
-using Makie
-using CairoMakie # hide
 plot(randn(10))
 
 # and one more
 plot(randn(11))
 
-using Makie
+using CairoMakie # Makie needs GPU. CairoMakie does not. Better for CI
 using GridapMakie
 using Gridap
 
