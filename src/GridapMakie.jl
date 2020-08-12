@@ -43,19 +43,20 @@ end
 function get_nodalvalues(o::PDEPlot)
     get_nodalvalues(o.visdata)
 end
-function get_nodalvalues(o::Visualization.VisualizationData)
-    only(o.nodaldata).second
-end
-
 function get_spacedim(o::PDEPlot)
     get_spacedim(o.visdata)
 end
-
-get_spacedim(o::Visualization.VisualizationData) = num_dims(o.grid)
-
 function get_valuetype(o::PDEPlot)
-    nodalvalues = get_nodalvalues(o)
-    typeof(first(nodalvalues))
+    get_valuetype(o.visdata)
+end
+function get_nodalvalues(o::Visualization.VisualizationData)
+    only(o.nodaldata).second
+end
+function get_spacedim(o::Visualization.VisualizationData)
+    num_dims(o.grid)
+end
+function get_valuetype(o::Visualization.VisualizationData)
+    typeof(first(get_nodalvalues(o)))
 end
 
 function AbstractPlotting.plot!(p::Plot(PDEPlot))
@@ -156,4 +157,46 @@ function _convert_arguments_for_mesh(P, visdata, nodalvalues)
     # wireframe!(p.plots[end][1], color = (:black, 0.6), linewidth = 3)
 end
 
+function demo_visdata(;spacedim, valuetype)
+    if spacedim == 1
+        model = simplexify(CartesianDiscreteModel((0,2pi), (20,)))
+        i1,i2,i3 = 1,1,1
+    elseif spacedim == 2
+        model = simplexify(CartesianDiscreteModel((0,2pi, -pi, pi),(10, 20)))
+        i1,i2,i3 = 1,2,2
+    elseif spacedim == 3
+        model = simplexify(CartesianDiscreteModel((0,2pi, -pi, pi, -1, 1),(10, 20, 13)))
+        i1,i2,i3 = 1,2,3
+    else
+        error()
+    end
+
+    T = valuetype
+    f = if T isa VectorValue{1}
+            f = pt -> T(sin(pt[i1]))
+        elseif T isa VectorValue{2}
+            f = pt -> T(sin(pt[i1]), cos(pt[i2]))
+        elseif T isa VectorValue{3}
+            f = pt -> T(sin(pt[i1]), cos(pt[i2]), pt[i3])
+        elseif T isa VectorValue
+            error()
+        elseif T isa TensorValue
+            error()
+        elseif spacedim == 1
+            pt -> sin(pt[1])
+        elseif spacedim == 2
+            pt -> sin(pt[1]) * cos(pt[2])
+        elseif spacedim == 3
+            pt -> sin(pt[1]) * cos(pt[2]) * pt[3]
+        else
+            error()
+        end
+    V = TestFESpace(reffe=:Lagrangian, order=1, valuetype=valuetype, conformity=:H1, model=model)
+    u = interpolate(V, f)
+
+    trian = Triangulation(model)
+    visdata = visualization_data(trian, cellfields=Dict("u" =>u))
+    return visdata
 end
+
+end#module
