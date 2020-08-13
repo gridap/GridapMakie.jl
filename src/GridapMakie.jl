@@ -11,46 +11,36 @@ using Gridap.ReferenceFEs
 using Gridap.Geometry
 using Gridap
 
+################################################################################
+##### Dispatch Pipeline
+################################################################################
 
-function to_makie_matrix(T, itr)
-    x1 = first(itr)
-    out = Matrix{T}(undef, length(itr), length(x1))
-    for i in 1:length(itr)
-        for j in 1:length(x1)
-            out[i, j] = itr[i][j]
-        end
-    end
-    out
-end
+"""
+    PDEPlot
 
-function _unzip(itr)
-    dim = length(first(itr))
-    if dim == 1
-        (map(n -> n[1], itr), )
-    elseif dim == 2
-        (map(n -> n[1], itr), map(n -> n[2], itr))
-    elseif dim == 3
-        (map(n -> n[1], itr), map(n -> n[2], itr), map(n -> n[3], itr))
-    else
-        error()
-    end
-end
-
+The job of `PDEPlot` is to choose a sane visualization of Gridap function like objects.
+E.g. produce `Arrows` for a vector field and lines for a scalar field in one space dimension etc.
+"""
 @recipe(PDEPlot, visualization_data) do scene
     Theme()
 end
-
 AbstractPlotting.plottype(::VisualizationData) = PDEPlot
 
-function get_nodalvalues(o::VisualizationData)
-    only(o.nodaldata).second
+function AbstractPlotting.convert_arguments(P::Type{<:Lines}, visdata::VisualizationData)
+    _convert_arguments_for_lines(P, visdata, get_nodalvalues(visdata))
 end
-function get_spacedim(o::VisualizationData)
-    num_dims(o.grid)
+function AbstractPlotting.convert_arguments(P::Type{<:Arrows}, visdata::VisualizationData)
+    _convert_arguments_for_quiver(P, visdata, get_nodalvalues(visdata))
 end
-function get_valuetype(o::VisualizationData)
-    typeof(first(get_nodalvalues(o)))
+function AbstractPlotting.convert_arguments(P::Type{<:Mesh}, visdata::VisualizationData)
+    _convert_arguments_for_mesh(P, visdata, get_nodalvalues(visdata))
 end
+
+function AbstractPlotting.convert_arguments(::Type{<:PDEPlot}, fun::SingleFieldFEFunction, grid::Triangulation)
+    to_visualzation_data(fun, grid)
+    return convert_arguments(PDEPlot, visdata)
+end
+
 
 function AbstractPlotting.plot!(p::PDEPlot{<:Tuple{VisualizationData}})
     visdata = to_value(p[:visualization_data])::VisualizationData
@@ -91,18 +81,34 @@ function _plot_dispatch_spacedim(p, visdata, spacedim::Val{2};
     # wireframe!(p, visdata)
 end
 
-function AbstractPlotting.convert_arguments(P::Type{<:Lines}, visdata::VisualizationData)
-    _convert_arguments_for_lines(P, visdata, get_nodalvalues(visdata))
-end
-function AbstractPlotting.convert_arguments(P::Type{<:Arrows}, visdata::VisualizationData)
-    _convert_arguments_for_quiver(P, visdata, get_nodalvalues(visdata))
-end
-function AbstractPlotting.convert_arguments(P::Type{<:Mesh}, visdata::VisualizationData)
-    _convert_arguments_for_mesh(P, visdata, get_nodalvalues(visdata))
+################################################################################
+##### Arrows
+################################################################################
+
+function to_makie_matrix(T, itr)
+    x1 = first(itr)
+    out = Matrix{T}(undef, length(itr), length(x1))
+    for i in 1:length(itr)
+        for j in 1:length(x1)
+            out[i, j] = itr[i][j]
+        end
+    end
+    out
 end
 
+function _unzip(itr)
+    dim = length(first(itr))
+    if dim == 1
+        (map(n -> n[1], itr), )
+    elseif dim == 2
+        (map(n -> n[1], itr), map(n -> n[2], itr))
+    elseif dim == 3
+        (map(n -> n[1], itr), map(n -> n[2], itr), map(n -> n[3], itr))
+    else
+        error()
+    end
+end
 
-# quiver data
 function _convert_arguments_for_quiver(P, visdata, nodalvalues)
     spacedim = num_dims(visdata.grid)
     if !(spacedim in 1:3)
@@ -130,17 +136,24 @@ function _convert_arguments_for_quiver(P, visdata, nodalvalues)
     convert_arguments(P, xyz..., uvw...)
 end
 
+################################################################################
+##### Lines
+################################################################################
 single(x) = x
 function single(x::Union{VectorValue, TensorValue})
     @assert length(x) == 1
     x[1]
 end
+
 function _convert_arguments_for_lines(P, visdata, nodalvalues)
     x = map(pt -> pt[1], get_node_coordinates(visdata.grid))
     y = single.(nodalvalues)
     convert_arguments(P, x, y)
 end
 
+################################################################################
+##### Mesh
+################################################################################
 function _convert_arguments_for_mesh(P, visdata, nodalvalues)
     makie_coords_spatial = to_makie_matrix(Float64, get_node_coordinates(visdata.grid))
     makie_conn = to_makie_matrix(Int, get_cell_nodes(visdata.grid))
@@ -150,9 +163,11 @@ function _convert_arguments_for_mesh(P, visdata, nodalvalues)
     # wireframe!(p.plots[end][1], color = (:black, 0.6), linewidth = 3)
 end
 
-function demo_visdata(;spacedim, valuetype)
-    if spacedim == 1
-        model = simplexify(CartesianDiscreteModel((0,2pi), (20,)))
+################################################################################
+##### Testing
+################################################################################
+function demo_model_u(;spacedim, valuetype)
+    if spacedim == 1 model = simplexify(CartesianDiscreteModel((0,2pi), (20,)))
         i1,i2,i3 = 1,1,1
     elseif spacedim == 2
         model = simplexify(CartesianDiscreteModel((0,2pi, -pi, pi),(10, 20)))
@@ -186,10 +201,28 @@ function demo_visdata(;spacedim, valuetype)
         end
     V = TestFESpace(reffe=:Lagrangian, order=1, valuetype=valuetype, conformity=:H1, model=model)
     u = interpolate(V, f)
+    (model=model, u=u)
+end
 
+function demo_visdata(;kw...)
+    model, u = demo_model_fefunction(;kw...)
     trian = Triangulation(model)
     visdata = Visualization.visualization_data(trian, cellfields=Dict("u" =>u))
     return visdata
 end
+
+################################################################################
+##### TODO: Move to Gridap.Visualization?
+################################################################################
+function to_visualzation_data(fun, grid)
+    _resolve_trian(model::DiscreteModel) = Triangulation(model)
+    _resolve_trian(trian) = trian
+    trian = _resolve_trian(grid)
+    visdata = visualization_data(trian, cellfields=Dict("u" => fun))
+    return visdata
+end
+get_nodalvalues(o::VisualizationData) = only(o.nodaldata).second
+get_spacedim(o::VisualizationData) = num_dims(o.grid)
+get_valuetype(o::VisualizationData) = typeof(first(get_nodalvalues(o)))
 
 end#module
