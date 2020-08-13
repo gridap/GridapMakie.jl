@@ -4,12 +4,30 @@ export PDEPlot
 
 using Gridap
 using AbstractPlotting
+const AP = AbstractPlotting
 using AbstractPlotting: Plot
 
-using Gridap.Visualization: VisualizationData, Visualization
+using Gridap.Visualization: VisualizationData, Visualization, visualization_data
 using Gridap.ReferenceFEs
 using Gridap.Geometry
+using Gridap.Geometry: CellFieldLike
 using Gridap
+
+
+################################################################################
+##### TODO: Move to Gridap.Visualization?
+################################################################################
+function to_visualzation_data(fun, grid)
+    # TODO merge into visualization_data?
+    _resolve_trian(model::DiscreteModel) = Triangulation(model)
+    _resolve_trian(trian) = trian
+    trian = _resolve_trian(grid)
+    visdata = visualization_data(trian, cellfields=Dict("u" => fun))
+    return visdata
+end
+get_nodalvalues(o::VisualizationData) = only(o.nodaldata).second
+get_spacedim(o::VisualizationData) = num_dims(o.grid)
+get_valuetype(o::VisualizationData) = typeof(first(get_nodalvalues(o)))
 
 ################################################################################
 ##### Dispatch Pipeline
@@ -24,25 +42,24 @@ E.g. produce `Arrows` for a vector field and lines for a scalar field in one spa
 @recipe(PDEPlot, visualization_data) do scene
     Theme()
 end
-AbstractPlotting.plottype(::VisualizationData) = PDEPlot
-
-function AbstractPlotting.convert_arguments(P::Type{<:Lines}, visdata::VisualizationData)
+AP.plottype(::VisualizationData) = PDEPlot
+function AP.convert_arguments(P::AP.PointBased, visdata::VisualizationData)
     _convert_arguments_for_lines(P, visdata, get_nodalvalues(visdata))
 end
-function AbstractPlotting.convert_arguments(P::Type{<:Arrows}, visdata::VisualizationData)
+function AP.convert_arguments(P::Type{<:Arrows}, visdata::VisualizationData)
     _convert_arguments_for_quiver(P, visdata, get_nodalvalues(visdata))
 end
-function AbstractPlotting.convert_arguments(P::Type{<:Mesh}, visdata::VisualizationData)
+function AP.convert_arguments(P::Type{<:Mesh}, visdata::VisualizationData)
     _convert_arguments_for_mesh(P, visdata, get_nodalvalues(visdata))
 end
 
-function AbstractPlotting.convert_arguments(::Type{<:PDEPlot}, fun::SingleFieldFEFunction, grid::Triangulation)
-    to_visualzation_data(fun, grid)
+function AP.convert_arguments(::Type{<:PDEPlot}, fun::CellFieldLike, grid::Triangulation)
+    visdata = to_visualzation_data(fun, grid)
     return convert_arguments(PDEPlot, visdata)
 end
 
 
-function AbstractPlotting.plot!(p::PDEPlot{<:Tuple{VisualizationData}})
+function AP.plot!(p::PDEPlot{<:Tuple{VisualizationData}})
     visdata = to_value(p[:visualization_data])::VisualizationData
     valuetype = get_valuetype(visdata)
     spacedim = Val(get_spacedim(visdata))
@@ -137,7 +154,7 @@ function _convert_arguments_for_quiver(P, visdata, nodalvalues)
 end
 
 ################################################################################
-##### Lines
+##### PointBased (covers Lines, Scatter etc.)
 ################################################################################
 single(x) = x
 function single(x::Union{VectorValue, TensorValue})
@@ -205,24 +222,10 @@ function demo_model_u(;spacedim, valuetype)
 end
 
 function demo_visdata(;kw...)
-    model, u = demo_model_fefunction(;kw...)
+    model, u = demo_model_u(;kw...)
     trian = Triangulation(model)
-    visdata = Visualization.visualization_data(trian, cellfields=Dict("u" =>u))
+    visdata = visualization_data(trian, cellfields=Dict("u" =>u))
     return visdata
 end
-
-################################################################################
-##### TODO: Move to Gridap.Visualization?
-################################################################################
-function to_visualzation_data(fun, grid)
-    _resolve_trian(model::DiscreteModel) = Triangulation(model)
-    _resolve_trian(trian) = trian
-    trian = _resolve_trian(grid)
-    visdata = visualization_data(trian, cellfields=Dict("u" => fun))
-    return visdata
-end
-get_nodalvalues(o::VisualizationData) = only(o.nodaldata).second
-get_spacedim(o::VisualizationData) = num_dims(o.grid)
-get_valuetype(o::VisualizationData) = typeof(first(get_nodalvalues(o)))
 
 end#module

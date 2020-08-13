@@ -12,9 +12,13 @@ mkpath(OUTDIR)
 function demo(verb, suffix::String ;spacedim, valuetype, kw...)
     visdata = GridapMakie.demo_visdata(;spacedim=spacedim, valuetype=valuetype)
     scene = verb(visdata; kw...)
+
     filename = "$(verb)_$(suffix).png"
     path = joinpath(OUTDIR, filename)
     FileIO.save(path, scene)
+    # also try vanilla plot
+    model, u = GridapMakie.demo_model_u(spacedim=spacedim, valuetype=valuetype)
+    pdeplot(u, Triangulation(model))
 end
 # visdata
 
