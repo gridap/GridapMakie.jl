@@ -1,6 +1,6 @@
 name = "GridapMakie"
 uuid = "41f30b06-6382-4b60-a5f7-79d86b35bf5d"
-authors = ["Francesc Verdugo <fverdugo@cimne.upc.edu> and contributors", "Jan Weidner <jw3126@gmail.com>"]
+authors = ["Francesc Verdugo <fverdugo@cimne.upc.edu>", "Jan Weidner <jw3126@gmail.com>", "Other contributors"]
 version = "0.1.0"
 
 [deps]
