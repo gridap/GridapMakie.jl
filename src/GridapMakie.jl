@@ -81,7 +81,8 @@ AP.plottype(::CatchallField, ::CatchallSpace) = PDEPlot
 AP.plottype(::VisualizationData) = PDEPlot
 
 function AP.convert_arguments(P::Type{<:AP.AbstractPlot}, f::CatchallField, space::CatchallSpace)
-    AP.convert_arguments(P, to_visualization_data(f, space))
+    visdata = to_visualization_data(f, space)
+    AP.convert_arguments(P, visdata)
 end
 
 function AP.convert_arguments(P::Type{<:AP.AbstractPlot}, space::CatchallSpace)
@@ -101,19 +102,6 @@ function AP.convert_arguments(P::Type{<:Mesh}, visdata::VisualizationData)
         _convert_arguments_for_mesh(P, visdata, get_nodalvalues(visdata))
     end
 end
-
-# function AP.convert_arguments(::Type{<:PDEPlot},
-#         fun::CatchallField,
-#         grid::CatchallSpace,
-#     )
-#     visdata = to_visualization_data(fun, grid)
-#     return convert_arguments(PDEPlot, visdata)
-# end
-
-# function AP.convert_arguments(::Type{<:PDEPlot}, grid::CatchallSpace)
-#     visdata = to_visualization_data(grid)
-#     return convert_arguments(PDEPlot, visdata)
-# end
 
 function _plot_model!(p, visdata)
     kw = p.attributes
@@ -230,6 +218,15 @@ function _convert_arguments_for_quiver(P, visdata, nodalvalues)
         z = zero(first(xy))
         xyz = (xy..., z)
     end
+    if length(uvw) == 1
+        x = only(xyz)
+        u = only(uvw)
+        xyz = (x, zero(x))
+        uvw = (u, zero(u))
+    end
+    @assert 2 <= length(uvw) <= 3
+    @assert 2 <= length(xyz) <= 3
+    @assert length(xyz) === length(uvw)
     convert_arguments(P, xyz..., uvw...)
 end
 
