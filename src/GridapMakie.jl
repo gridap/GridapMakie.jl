@@ -6,7 +6,6 @@ using Gridap
 using ConstructionBase
 using AbstractPlotting
 const AP = AbstractPlotting
-using AbstractPlotting: Plot
 
 using Gridap.Visualization: VisualizationData, Visualization, visualization_data
 using Gridap.ReferenceFEs
@@ -81,6 +80,14 @@ AP.plottype(::CatchallSpace) = PDEPlot
 AP.plottype(::CatchallField, ::CatchallSpace) = PDEPlot
 AP.plottype(::VisualizationData) = PDEPlot
 
+function AP.convert_arguments(P::Type{<:AP.AbstractPlot}, f::CatchallField, space::CatchallSpace)
+    AP.convert_arguments(P, to_visualization_data(f, space))
+end
+
+function AP.convert_arguments(P::Type{<:AP.AbstractPlot}, space::CatchallSpace)
+    AP.convert_arguments(P, to_visualization_data(space))
+end
+
 function AP.convert_arguments(P::AP.PointBased, visdata::VisualizationData)
     _convert_arguments_for_lines(P, visdata, get_nodalvalues(visdata))
 end
@@ -95,18 +102,18 @@ function AP.convert_arguments(P::Type{<:Mesh}, visdata::VisualizationData)
     end
 end
 
-function AP.convert_arguments(::Type{<:PDEPlot},
-        fun::CatchallField,
-        grid::CatchallSpace,
-    )
-    visdata = to_visualization_data(fun, grid)
-    return convert_arguments(PDEPlot, visdata)
-end
+# function AP.convert_arguments(::Type{<:PDEPlot},
+#         fun::CatchallField,
+#         grid::CatchallSpace,
+#     )
+#     visdata = to_visualization_data(fun, grid)
+#     return convert_arguments(PDEPlot, visdata)
+# end
 
-function AP.convert_arguments(::Type{<:PDEPlot}, grid::CatchallSpace)
-    visdata = to_visualization_data(grid)
-    return convert_arguments(PDEPlot, visdata)
-end
+# function AP.convert_arguments(::Type{<:PDEPlot}, grid::CatchallSpace)
+#     visdata = to_visualization_data(grid)
+#     return convert_arguments(PDEPlot, visdata)
+# end
 
 function _plot_model!(p, visdata)
     kw = p.attributes
