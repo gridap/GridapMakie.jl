@@ -48,6 +48,22 @@ get_valuetype(o::VisualizationData) = typeof(first(get_nodalvalues(o)))
 ##### Dispatch Pipeline
 ################################################################################
 
+# Dispatch strategy
+# Given a call `plot(arg...)` we first decide to take ownership by overloading
+# AP.plottype(::GridapCares, ::AboutTheseArgs) = PDEPlot
+#
+# Then the arguments are standardized into `VisualizationData` by overloading
+#
+# AP.convert_arguments(::Type{<:PDEPlot}, args...)
+#
+# For VisualizationData we have various recipes like
+#
+# AP.convert_arguments(P::AP.PointBased, visdata::VisualizationData)
+#
+# Finally `plot!(::PDEPlot)` is overloaded to magially dispatch to an appropriate recipe
+# based on `spacedimension`, `valuetype` etc. For instance a 1d scalar field should
+# use `Lines`, while a 2d vector field should use `Arrows` etc.
+
 """
     PDEPlot
 
@@ -57,7 +73,14 @@ E.g. produce `Arrows` for a vector field and lines for a scalar field in one spa
 @recipe(PDEPlot, visualization_data) do scene
     Theme()
 end
+
+const CatchallSpace = Union{Triangulation, DiscreteModel}
+const CatchallSingleField = CellFieldLike
+const CatchallField = Union{CatchallSingleField, MultiFieldFEFunction}
+AP.plottype(::CatchallSpace) = PDEPlot
+AP.plottype(::CatchallField, ::CatchallSpace) = PDEPlot
 AP.plottype(::VisualizationData) = PDEPlot
+
 function AP.convert_arguments(P::AP.PointBased, visdata::VisualizationData)
     _convert_arguments_for_lines(P, visdata, get_nodalvalues(visdata))
 end
@@ -72,16 +95,15 @@ function AP.convert_arguments(P::Type{<:Mesh}, visdata::VisualizationData)
     end
 end
 
-const TrianOrModel = Union{Triangulation, DiscreteModel}
 function AP.convert_arguments(::Type{<:PDEPlot},
-        fun::Union{CellFieldLike, MultiFieldFEFunction},
-        grid::TrianOrModel,
+        fun::CatchallField,
+        grid::CatchallSpace,
     )
     visdata = to_visualization_data(fun, grid)
     return convert_arguments(PDEPlot, visdata)
 end
 
-function AP.convert_arguments(::Type{<:PDEPlot}, grid::TrianOrModel)
+function AP.convert_arguments(::Type{<:PDEPlot}, grid::CatchallSpace)
     visdata = to_visualization_data(grid)
     return convert_arguments(PDEPlot, visdata)
 end

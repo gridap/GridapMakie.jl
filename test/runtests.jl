@@ -22,8 +22,10 @@ function demo(verb, suffix::String ;spacedim, valuetype, kw...)
     data = GridapMakie.demo_data(spacedim=spacedim, valuetype=valuetype)
     if data.u !== nothing
         pdeplot(data.u, Triangulation(data.model))
+        plot(data.u, data.model)
     else
         pdeplot(Triangulation(data.model))
+        plot(data.model)
     end
 end
 # visdata
