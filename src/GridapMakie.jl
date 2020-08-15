@@ -52,6 +52,31 @@ ismodel(visdata::VisualizationData) = isempty(visdata.nodaldata)
 const CatchallSpace = Union{Triangulation, DiscreteModel}
 const CatchallSingleField = CellFieldLike
 const CatchallField = Union{CatchallSingleField, MultiFieldFEFunction}
+
+struct IsModel; spacedim::Int; end
+struct IsSingleField
+    spacedim::Int
+    scalarizable::Bool
+    valuetype::Type
+end
+struct IsMultiField
+    spacedim::Int
+end
+
+function dispatchinfo(visdata::VisualizationData)
+    spacedim = num_dims(visdata.grid)
+    if isempty(visdata.nodaldata)
+        IsModel(spacedim)
+    elseif length(visdata.nodaldata) == 1
+        x = first(get_nodalvalues(visdata))
+        scalarizable = length(x) == 1
+        valuetype = typeof(x)
+        IsSingleField(spacedim, scalarizable, valuetype)
+    else
+        IsMultiField(spacedim)
+    end
+end
+
 function AP.plottype(space::CatchallSpace)
     AP.plottype(to_visualization_data(space))
 end
@@ -59,28 +84,27 @@ function AP.plottype(field::CatchallField, space::CatchallSpace)
     AP.plottype(to_visualization_data(field, space))
 end
 function AP.plottype(visdata::VisualizationData)
-    if ismodel(visdata)
-        Wireframe
-    elseif issinglefield(visdata)
-        valuetype = get_valuetype(visdata)
-        dim = get_spacedim(visdata)
-        if (dim == 1) && (valuetype <: Union{VectorValue{1}, TensorValue{1}})
+    info = dispatchinfo(visdata)
+    _plottype(info)
+end
+function _plottype(info::IsModel)
+    Wireframe
+end
+function _plottype(info::IsSingleField)
+    if info.scalarizable
+        if info.spacedim == 1
             Lines
-        elseif (dim == 1) && (valuetype <: Union{VectorValue, TensorValue})
-            Arrows
-        elseif (dim == 1)
-            Lines
-        elseif (valuetype <: Union{VectorValue, TensorValue})
-            Arrows
-        elseif (dim == 2)
+        elseif info.spacedim == 2
             Mesh
         else
-            error("TODO spacedim = $spacedim, valuetype = $valuetype plotting not supported")
+            MeshScatter
         end
     else
-        @assert ismultifield(visdata)
-        MultiFieldPlot
+        Arrows
     end
+end
+function _plottype(::IsMultiField)
+    MultiFieldPlot
 end
 
 function AP.convert_arguments(P::Type{<:AP.AbstractPlot}, f::CatchallField, space::CatchallSpace)
@@ -228,7 +252,7 @@ function demo_data_single_field(;spacedim::Integer, valuetype::Type)
     if spacedim == 1 model = simplexify(CartesianDiscreteModel((0,2pi), (20,)))
         i1,i2,i3 = 1,1,1
     elseif spacedim == 2
-        model = simplexify(CartesianDiscreteModel((0,2pi, -pi, pi),(10, 20)))
+        model = simplexify(CartesianDiscreteModel((0,2pi, -pi, pi), (10, 20)))
         i1,i2,i3 = 1,2,2
     elseif spacedim == 3
         model = simplexify(CartesianDiscreteModel((0,2pi, -pi, pi, -1, 1),(10, 20, 13)))
@@ -238,23 +262,23 @@ function demo_data_single_field(;spacedim::Integer, valuetype::Type)
     end
 
     T = valuetype
-    c1,c2,c3 = randn(3)
+    c1,c2,c3 = 0.5.+1.5.*rand(3)
     f = if T isa VectorValue{1}
             f = pt -> T(c1*sin(pt[i1]))
         elseif T isa VectorValue{2}
-            f = pt -> T(c1*sin(pt[i1]), c2*cos(pt[i2]))
+            f = pt -> T(c1*pt[i2], -c2*pt[i1])
         elseif T isa VectorValue{3}
-            f = pt -> T(c1*sin(pt[i1]), c2*cos(pt[i2]), c3*pt[i3])
+            f = pt -> T(c1*sin(pt[i1]), c2*cos(pt[i2]) + pt[i3], c3*pt[i3] - pt[2])
         elseif T isa VectorValue
             error()
         elseif T isa TensorValue
             error()
         elseif spacedim == 1
-            pt -> c1*sin(pt[1]) + c2
+            pt -> T(c1*sin(pt[1]) + c2)
         elseif spacedim == 2
-            pt -> c1*sin(pt[1]) * cos(pt[2]) + c2
+            pt -> T(c1*sin(pt[1]) * cos(pt[2]) + c2)
         elseif spacedim == 3
-            pt -> c1*sin(pt[1]) * cos(pt[2]) * pt[3] + c2
+            pt -> T(c1*sin(pt[1]) * cos(pt[2]) * pt[3] + c2)
         else
             error()
         end
