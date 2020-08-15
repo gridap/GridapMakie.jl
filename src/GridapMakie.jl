@@ -1,7 +1,5 @@
 module GridapMakie
 
-export PDEPlot
-
 using Gridap
 using ConstructionBase
 using AbstractPlotting
@@ -27,7 +25,9 @@ end
 function _resolve_cellfields(fun::MultiFieldFEFunction)
     Dict("u$i" => fi for (i, fi) in enumerate(fun))
 end
-
+function to_visualization_data(visdata::VisualizationData)
+    visdata
+end
 function to_visualization_data(fun, grid)
     # TODO merge this function into visualization_data?
     trian = _resolve_trian(grid)
@@ -43,42 +43,45 @@ get_nodalvalues(o::VisualizationData) = only(o.nodaldata).second
 get_spacedim(o::VisualizationData) = num_dims(o.grid)
 get_valuetype(o::VisualizationData) = typeof(first(get_nodalvalues(o)))
 
+ismultifield(visdata::VisualizationData) = length(visdata.nodaldata) > 1
+issinglefield(visdata::VisualizationData) = length(visdata.nodaldata) == 1
+ismodel(visdata::VisualizationData) = isempty(visdata.nodaldata)
 ################################################################################
 ##### Dispatch Pipeline
 ################################################################################
-
-# Dispatch strategy
-# Given a call `plot(arg...)` we first decide to take ownership by overloading
-# AP.plottype(::GridapCares, ::AboutTheseArgs) = PDEPlot
-#
-# Then the arguments are standardized into `VisualizationData` by overloading
-#
-# AP.convert_arguments(::Type{<:PDEPlot}, args...)
-#
-# For VisualizationData we have various recipes like
-#
-# AP.convert_arguments(P::AP.PointBased, visdata::VisualizationData)
-#
-# Finally `plot!(::PDEPlot)` is overloaded to magially dispatch to an appropriate recipe
-# based on `spacedimension`, `valuetype` etc. For instance a 1d scalar field should
-# use `Lines`, while a 2d vector field should use `Arrows` etc.
-
-"""
-    PDEPlot
-
-The job of `PDEPlot` is to choose a sane visualization of Gridap function like objects.
-E.g. produce `Arrows` for a vector field and lines for a scalar field in one space dimension etc.
-"""
-@recipe(PDEPlot, visualization_data) do scene
-    Theme()
-end
-
 const CatchallSpace = Union{Triangulation, DiscreteModel}
 const CatchallSingleField = CellFieldLike
 const CatchallField = Union{CatchallSingleField, MultiFieldFEFunction}
-AP.plottype(::CatchallSpace) = PDEPlot
-AP.plottype(::CatchallField, ::CatchallSpace) = PDEPlot
-AP.plottype(::VisualizationData) = PDEPlot
+function AP.plottype(space::CatchallSpace)
+    AP.plottype(to_visualization_data(space))
+end
+function AP.plottype(field::CatchallField, space::CatchallSpace)
+    AP.plottype(to_visualization_data(field, space))
+end
+function AP.plottype(visdata::VisualizationData)
+    if ismodel(visdata)
+        Wireframe
+    elseif issinglefield(visdata)
+        valuetype = get_valuetype(visdata)
+        dim = get_spacedim(visdata)
+        if (dim == 1) && (valuetype <: Union{VectorValue{1}, TensorValue{1}})
+            Lines
+        elseif (dim == 1) && (valuetype <: Union{VectorValue, TensorValue})
+            Arrows
+        elseif (dim == 1)
+            Lines
+        elseif (valuetype <: Union{VectorValue, TensorValue})
+            Arrows
+        elseif (dim == 2)
+            Mesh
+        else
+            error("TODO spacedim = $spacedim, valuetype = $valuetype plotting not supported")
+        end
+    else
+        @assert ismultifield(visdata)
+        MultiFieldPlot
+    end
+end
 
 function AP.convert_arguments(P::Type{<:AP.AbstractPlot}, f::CatchallField, space::CatchallSpace)
     visdata = to_visualization_data(f, space)
@@ -103,67 +106,21 @@ function AP.convert_arguments(P::Type{<:Mesh}, visdata::VisualizationData)
     end
 end
 
-function _plot_model!(p, visdata)
-    kw = p.attributes
-    mesh!(p, visdata; kw...)
+################################################################################
+##### MultiFieldPlot
+################################################################################
+@recipe(MultiFieldPlot, visualization_data) do scene
+    Theme()
 end
 
-ismultifield(visdata::VisualizationData) = length(visdata.nodaldata) > 1
-issinglefield(visdata::VisualizationData) = length(visdata.nodaldata) == 1
-ismodel(visdata::VisualizationData) = isempty(visdata.nodaldata)
-
-function AP.plot!(p::PDEPlot{<:Tuple{VisualizationData}})
+function AP.plot!(p::MultiFieldPlot{<:Tuple{VisualizationData}})
     visdata = to_value(p[:visualization_data])::VisualizationData
-    if ismodel(visdata)
-        _plot_model!(p, visdata)
-    elseif issinglefield(visdata)
-        _plot_single_field!(p, visdata)
-    else
-        @assert ismultifield(visdata)
-        for (key, nodelvals) in visdata.nodaldata
-            visdata_key = setproperties(visdata, nodaldata=Dict(key => nodelvals))
-            _plot_single_field!(p, visdata_key)
-        end
+    @assert ismultifield(visdata)
+    for (key, nodelvals) in visdata.nodaldata
+        visdata_key = setproperties(visdata, nodaldata=Dict(key => nodelvals))
+        plot!(p, visdata_key)
     end
     return p
-end
-function _plot_single_field!(p, visdata)
-    valuetype = get_valuetype(visdata)
-    spacedim = Val(get_spacedim(visdata))
-    kw = p.attributes
-    _plot_dispatch_spacedim_valuetype!(p, visdata, spacedim, valuetype; kw...)
-end
-
-function _plot_dispatch_spacedim_valuetype!(
-    p,
-    visdata,
-    spacedim::Val{1},
-    valuetype::Type{<:VectorValue{1}};
-    kw...)
-    lines!(p, visdata; kw...)
-end
-function _plot_dispatch_spacedim_valuetype!(p, visdata, spacedim, valuetype; kw...)
-    _plot_dispatch_valuetype!(p, visdata, valuetype; kw...)
-end
-
-function _plot_dispatch_valuetype!(p, visdata, valuetype::Type{<:Union{VectorValue, TensorValue}}; kw...)
-    quiver!(p,visdata; kw...)
-end
-
-function _plot_dispatch_valuetype!(p, visdata, valuetype; kw...)
-    spacedim = Val(get_spacedim(visdata))
-    _plot_dispatch_spacedim!(p, visdata, spacedim; kw...)
-end
-
-function _plot_dispatch_spacedim!(p, visdata, spacedim::Val{1}; kw...)
-    lines!(p, visdata; kw...)
-end
-
-function _plot_dispatch_spacedim!(p, visdata, spacedim::Val{2};
-        color=get_nodalvalues(visdata),
-        kw...)
-    mesh!(p, visdata; color=color, kw...)
-    # wireframe!(p, visdata)
 end
 
 ################################################################################
