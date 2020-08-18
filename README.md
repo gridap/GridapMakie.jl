@@ -18,6 +18,13 @@ Things can and will break without deprecation or warning
 ```@example README
 using Gridap, GridapMakie, Makie
 
+model = simplexify(CartesianDiscreteModel((-2pi,2pi,-pi,pi), (20,10)))
+scene = plot(model)
+```
+
+![](_readme/images/2d.png)
+
+```@example README
 data = GridapMakie.demo_data(spacedim=1, valuetype=Float64)
 scene = plot(data.u, data.model)
 ```

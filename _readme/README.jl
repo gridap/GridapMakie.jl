@@ -12,8 +12,8 @@
 # # Examples
 using Gridap, GridapMakie, Makie
 
-model = CartesianDiscreteModel((-2pi,2pi,-pi,pi), (20,10))
-plot(model)
+model = simplexify(CartesianDiscreteModel((-2pi,2pi,-pi,pi), (20,10)))
+scene = plot(model)
 save("images/2d.png", scene) #!md
 # ![](_readme/images/2d.png)
 
