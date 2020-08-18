@@ -1,6 +1,7 @@
 module GridapMakie
 
 using Gridap
+using ArgCheck
 using ConstructionBase
 using AbstractPlotting
 const AP = AbstractPlotting
@@ -137,12 +138,12 @@ end
     Theme()
 end
 
-function AP.plot!(p::MultiFieldPlot{<:Tuple{VisualizationData}})
+function AP.plot!(p::AP.Plot(MultiFieldPlot))
     visdata = to_value(p[:visualization_data])::VisualizationData
-    @assert ismultifield(visdata)
+    @argcheck ismultifield(visdata)
     for (key, nodelvals) in visdata.nodaldata
         visdata_key = setproperties(visdata, nodaldata=Dict(key => nodelvals))
-        plot!(p, visdata_key)
+        plot!(p, Attributes(p), visdata_key)
     end
     return p
 end
@@ -246,6 +247,37 @@ function _convert_arguments_for_mesh(P, visdata, nodalvalues)
 end
 
 ################################################################################
+##### Wireframe
+################################################################################
+function AP.plot!(p::Wireframe{<:Tuple{VisualizationData}})
+    visdata = to_value(p[1])::VisualizationData
+    xyz = _convert_arguments_for_linesegments(visdata)
+    linesegments!(p, Attributes(p), xyz...)
+end
+
+function _convert_arguments_for_linesegments(visdata)
+    @argcheck dispatchinfo(visdata) isa IsModel
+    @argcheck dispatchinfo(visdata).spacedim == 2
+    cells = get_cell_nodes(visdata.grid)
+    pts = get_node_coordinates(visdata.grid)::AbstractVector{<:VectorValue}
+    lines = typeof(first(pts))[]
+    cell = first(cells)::AbstractVector{<:Integer}
+    # each cell is encoded list of indices of
+    # the vertex points
+    for cell in cells
+        # e.g. cell = [4,5,6] describes a triangle with vertices of pt[5], pt[5], pts[6]
+        for iistart in eachindex(cell)
+            iistop = iistart + 1
+            istart = cell[iistart]
+            istop = get(cell, iistop, first(cell))
+            push!(lines, pts[istart])
+            push!(lines, pts[istop])
+        end
+    end
+    return _unzip(lines)
+end
+
+################################################################################
 ##### Testing
 ################################################################################
 function demo_data_single_field(;spacedim::Integer, valuetype::Type)
@@ -263,15 +295,15 @@ function demo_data_single_field(;spacedim::Integer, valuetype::Type)
 
     T = valuetype
     c1,c2,c3 = 0.5.+1.5.*rand(3)
-    f = if T isa VectorValue{1}
+    f = if T <: VectorValue{1}
             f = pt -> T(c1*sin(pt[i1]))
-        elseif T isa VectorValue{2}
+        elseif T <: VectorValue{2}
             f = pt -> T(c1*pt[i2], -c2*pt[i1])
-        elseif T isa VectorValue{3}
+        elseif T <: VectorValue{3}
             f = pt -> T(c1*sin(pt[i1]), c2*cos(pt[i2]) + pt[i3], c3*pt[i3] - pt[2])
-        elseif T isa VectorValue
+        elseif T <: VectorValue
             error()
-        elseif T isa TensorValue
+        elseif T <: TensorValue
             error()
         elseif spacedim == 1
             pt -> T(c1*sin(pt[1]) + c2)
