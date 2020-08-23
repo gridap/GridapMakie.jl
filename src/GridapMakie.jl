@@ -121,7 +121,7 @@ function AP.convert_arguments(P::AP.PointBased, visdata::VisualizationData)
     _convert_arguments_for_lines(P, visdata, get_nodalvalues(visdata))
 end
 function AP.convert_arguments(P::Type{<:Arrows}, visdata::VisualizationData)
-    _convert_arguments_for_quiver(P, visdata, get_nodalvalues(visdata))
+    _convert_arguments_for_arrows(P, visdata, get_nodalvalues(visdata))
 end
 function AP.convert_arguments(P::Type{<:Mesh}, visdata::VisualizationData)
     if ismodel(visdata) #visdata contains only a triangulation
@@ -176,7 +176,7 @@ function _unzip(itr)
     end
 end
 
-function _convert_arguments_for_quiver(P, visdata, nodalvalues)
+function _convert_arguments_for_arrows(P, visdata, nodalvalues)
     spacedim = num_dims(visdata.grid)
     if !(spacedim in 1:3)
         throw(ArgumentError("Plotting of field over $spacedim dimensional space unsupported."))
@@ -256,6 +256,43 @@ function AP.plot!(p::Wireframe{<:Tuple{VisualizationData}})
 end
 
 function _convert_arguments_for_linesegments(visdata)
+    if dispatchinfo(visdata) isa IsModel
+        _convert_arguments_for_linesegments_model(visdata)
+    else
+        _convert_arguments_for_linesegments_singlefield(visdata)
+    end
+end
+
+function _convert_arguments_for_linesegments_singlefield(visdata)
+    @argcheck dispatchinfo(visdata) isa IsSingleField
+    @argcheck dispatchinfo(visdata).spacedim == 2
+    cells = get_cell_nodes(visdata.grid)
+    pts2d = get_node_coordinates(visdata.grid)::AbstractVector{<:VectorValue}
+    fs = get_nodalvalues(visdata)
+    lines = Vector{Float64}[]
+    cell = first(cells)::AbstractVector{<:Integer}
+    # each cell is encoded list of indices of
+    # the vertex points
+    for cell in cells
+        # e.g. cell = [4,5,6] describes a triangle with vertices of pt[5], pt[5], pts[6]
+        for iistart in eachindex(cell)
+            iistop = iistart + 1
+            istart = cell[iistart]
+            istop = get(cell, iistop, first(cell))
+            pt2d1 = pts2d[istart]
+            pt2d2 = pts2d[istop]
+            x1 = pt2d1[1]; y1 = pt2d1[2]
+            x2 = pt2d2[1]; y2 = pt2d2[2]
+            z1 = fs[istart]
+            z2 = fs[istop]
+            push!(lines, [x1, y1, z1])
+            push!(lines, [x2, y2, z2])
+        end
+    end
+    return _unzip(lines)
+end
+
+function _convert_arguments_for_linesegments_model(visdata)
     @argcheck dispatchinfo(visdata) isa IsModel
     @argcheck dispatchinfo(visdata).spacedim == 2
     cells = get_cell_nodes(visdata.grid)

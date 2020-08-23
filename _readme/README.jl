@@ -33,6 +33,15 @@ scene = mesh(u, model, color=:yellow)
 save("images/mesh_2d_Scalar.png", scene) #!md
 # ![](_readme/images/mesh_2d_Scalar.png)
 
+model = simplexify(CartesianDiscreteModel((-2pi,2pi,-pi,pi), (10,10)))
+V = TestFESpace(reffe=:Lagrangian, order=1, valuetype = Float64,
+    conformity=:H1, model=model)
+f(pt) = sin(pt[1])*cos(pt[2])
+u = interpolate(V, f)
+scene = wireframe(u, model)
+save("images/wireframe_2d_Scalar.png", scene) #!md
+# ![](_readme/images/wireframe_2d_Scalar.png)
+
 model = CartesianDiscreteModel((-1,1,-1,1), (10,10))
 V = TestFESpace(reffe=:Lagrangian, order=1, valuetype = VectorValue{2, Float64},
     conformity=:H1, model=model)

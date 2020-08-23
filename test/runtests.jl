@@ -36,6 +36,7 @@ end
 
 @testset "smoketests" begin
     @test demo(wireframe, "2d", spacedim=2, valuetype=nothing)
+    @test demo(wireframe, "2d_Scalar", spacedim=2, valuetype=Float64)
     @test demo(plot, "2d", spacedim=2, valuetype=nothing)
     @test demo(plot, "1d_Scalar", spacedim=1, valuetype=Float64)
     @test demo(lines, "1d_Scalar", spacedim=1, valuetype=Float64)
