@@ -5,6 +5,8 @@ using ArgCheck
 using ConstructionBase
 using AbstractPlotting
 const AP = AbstractPlotting
+import GeometryBasics
+const GB = GeometryBasics
 
 using Gridap.Visualization: VisualizationData, Visualization, visualization_data
 using Gridap.ReferenceFEs
@@ -163,18 +165,14 @@ function to_makie_matrix(T, itr)
     out
 end
 
-function _unzip(itr)
-    dim = length(first(itr))
-    if dim == 1
-        (map(n -> n[1], itr), )
-    elseif dim == 2
-        (map(n -> n[1], itr), map(n -> n[2], itr))
-    elseif dim == 3
-        (map(n -> n[1], itr), map(n -> n[2], itr), map(n -> n[3], itr))
-    else
-        error()
-    end
-end
+_PV2 = Union{GB.Point2f0, GB.Vec2f0}
+_PV3 = Union{GB.Point3f0, GB.Vec3f0}
+_trailing_zeros(P, xyz::Tuple) = __trailing_zeros_splat(P, xyz...)
+__trailing_zeros_splat(P::Type{<:_PV2}, x) = P(x, 0f0)
+__trailing_zeros_splat(P::Type{<:_PV2}, x, y) = P(x, y)
+__trailing_zeros_splat(P::Type{<:_PV3}, x, ) = P(x, 0f0, 0f0)
+__trailing_zeros_splat(P::Type{<:_PV3}, x, y) = P(x, y, 0f0)
+__trailing_zeros_splat(P::Type{<:_PV3}, x, y, z) = P(x, y, z)
 
 function _convert_arguments_for_arrows(P, visdata, nodalvalues)
     spacedim = num_dims(visdata.grid)
@@ -187,29 +185,13 @@ function _convert_arguments_for_arrows(P, visdata, nodalvalues)
     if !(vecdim in 1:3)
         throw(ArgumentError("Plotting of field with $vecdim components unsupported."))
     end
-    uvw = _unzip(nodalvalues)
-    xyz = _unzip(get_node_coordinates(visdata.grid))
-    # padding
-    while length(uvw) < length(xyz)
-        uv = uvw
-        w = zero(first(uv))
-        uvw = (uv..., w)
-    end
-    while length(uvw) > length(xyz)
-        xy = xyz
-        z = zero(first(xy))
-        xyz = (xy..., z)
-    end
-    if length(uvw) == 1
-        x = only(xyz)
-        u = only(uvw)
-        xyz = (x, zero(x))
-        uvw = (u, zero(u))
-    end
-    @assert 2 <= length(uvw) <= 3
-    @assert 2 <= length(xyz) <= 3
-    @assert length(xyz) === length(uvw)
-    convert_arguments(P, xyz..., uvw...)
+    N = max(spacedim, vecdim, 2)
+    Point = GB.Point{N, Float32}
+    node_coords = get_node_coordinates(visdata.grid)
+    pts = _trailing_zeros.(Ref(Point), Tuple.(node_coords))
+    Vec = GB.Vec{N, Float32}
+    vecs = _trailing_zeros.(Ref(Vec), Tuple.(nodalvalues))
+    return (pts, vecs)
 end
 
 ################################################################################
@@ -224,7 +206,10 @@ end
 function _convert_arguments_for_lines(P, visdata, nodalvalues)
     x = map(pt -> pt[1], get_node_coordinates(visdata.grid))
     y = single.(nodalvalues)
-    convert_arguments(P, x, y)
+    pts = map(get_node_coordinates(visdata.grid), nodalvalues) do ptx, y
+        GB.Point2f0(ptx[1], single(y))
+    end
+    (pts,)
 end
 
 ################################################################################
@@ -251,26 +236,39 @@ end
 ################################################################################
 function AP.plot!(p::Wireframe{<:Tuple{VisualizationData}})
     visdata = to_value(p[1])::VisualizationData
-    xyz = _convert_arguments_for_linesegments(visdata)
-    linesegments!(p, Attributes(p), xyz...)
-end
-
-function _convert_arguments_for_linesegments(visdata)
-    if dispatchinfo(visdata) isa IsModel
-        _convert_arguments_for_linesegments_model(visdata)
+    Point = if dispatchinfo(visdata) isa IsModel
+        GB.Point2f0
     else
-        _convert_arguments_for_linesegments_singlefield(visdata)
+        GB.Point3f0
     end
+    lines = _convert_arguments_for_linesegments(Point, visdata)
+    linesegments!(p, Attributes(p), lines)
 end
 
-function _convert_arguments_for_linesegments_singlefield(visdata)
-    @argcheck dispatchinfo(visdata) isa IsSingleField
+@noinline function _convert_arguments_for_linesegments(
+        ::Type{Point}, visdata
+    ) where {Point <: Union{GB.Point2f0, GB.Point3f0}}
+
+    @argcheck dispatchinfo(visdata) isa Union{IsModel, IsSingleField}
     @argcheck dispatchinfo(visdata).spacedim == 2
+    function build_point(Point::Type{GB.Point2f0}, index, node_coords, _)
+        x,y = Tuple(node_coords[index])
+        return Point(x,y)
+    end
+    function build_point(Point::Type{GB.Point3f0}, index, node_coords, node_vals)
+        x,y = Tuple(node_coords[index])
+        z = node_vals[index]
+        return Point(x,y, z)
+    end
     cells = get_cell_nodes(visdata.grid)
-    pts2d = get_node_coordinates(visdata.grid)::AbstractVector{<:VectorValue}
-    fs = get_nodalvalues(visdata)
-    lines = Vector{Float64}[]
-    cell = first(cells)::AbstractVector{<:Integer}
+    node_coords = get_node_coordinates(visdata.grid)::AbstractVector{<:VectorValue}
+    node_vals = if Point == GB.Point2f0
+        nothing
+    else
+        get_nodalvalues(visdata)
+    end
+    lines = NTuple{2, Point}[]
+    first(cells)::AbstractVector{<:Integer}
     # each cell is encoded list of indices of
     # the vertex points
     for cell in cells
@@ -279,39 +277,12 @@ function _convert_arguments_for_linesegments_singlefield(visdata)
             iistop = iistart + 1
             istart = cell[iistart]
             istop = get(cell, iistop, first(cell))
-            pt2d1 = pts2d[istart]
-            pt2d2 = pts2d[istop]
-            x1 = pt2d1[1]; y1 = pt2d1[2]
-            x2 = pt2d2[1]; y2 = pt2d2[2]
-            z1 = fs[istart]
-            z2 = fs[istop]
-            push!(lines, [x1, y1, z1])
-            push!(lines, [x2, y2, z2])
+            pt1 = build_point(Point, istart, node_coords, node_vals)
+            pt2 = build_point(Point, istop , node_coords, node_vals)
+            push!(lines, (pt1, pt2))
         end
     end
-    return _unzip(lines)
-end
-
-function _convert_arguments_for_linesegments_model(visdata)
-    @argcheck dispatchinfo(visdata) isa IsModel
-    @argcheck dispatchinfo(visdata).spacedim == 2
-    cells = get_cell_nodes(visdata.grid)
-    pts = get_node_coordinates(visdata.grid)::AbstractVector{<:VectorValue}
-    lines = typeof(first(pts))[]
-    cell = first(cells)::AbstractVector{<:Integer}
-    # each cell is encoded list of indices of
-    # the vertex points
-    for cell in cells
-        # e.g. cell = [4,5,6] describes a triangle with vertices of pt[5], pt[5], pts[6]
-        for iistart in eachindex(cell)
-            iistop = iistart + 1
-            istart = cell[iistart]
-            istop = get(cell, iistop, first(cell))
-            push!(lines, pts[istart])
-            push!(lines, pts[istop])
-        end
-    end
-    return _unzip(lines)
+    return lines
 end
 
 ################################################################################
