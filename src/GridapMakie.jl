@@ -11,7 +11,6 @@ const GB = GeometryBasics
 using Gridap.Visualization: VisualizationData, Visualization, visualization_data
 using Gridap.ReferenceFEs
 using Gridap.Geometry
-using Gridap.Geometry: CellFieldLike
 using Gridap.MultiField: MultiFieldFEFunction
 using Gridap
 
@@ -53,7 +52,12 @@ ismodel(visdata::VisualizationData) = isempty(visdata.nodaldata)
 ##### Dispatch Pipeline
 ################################################################################
 const CatchallSpace = Union{Triangulation, DiscreteModel}
-const CatchallSingleField = CellFieldLike
+const CatchallSingleField = if isdefined(Gridap.Geometry, :CellFieldLike)
+    # OLD
+    Gridap.Geometry.CellFieldLike
+else
+    Gridap.CellData.CellField
+end
 const CatchallField = Union{CatchallSingleField, MultiFieldFEFunction}
 
 struct IsModel; spacedim::Int; end
@@ -126,10 +130,10 @@ function AP.convert_arguments(P::Type{<:Arrows}, visdata::VisualizationData)
     _convert_arguments_for_arrows(P, visdata, get_nodalvalues(visdata))
 end
 function AP.convert_arguments(P::Type{<:Wireframe}, visdata::VisualizationData)
-    (gbmesh(visdata),)
+    AP.convert_arguments(P, gbmesh(visdata))
 end
 function AP.convert_arguments(P::Type{<:Mesh}, visdata::VisualizationData)
-    (gbmesh(visdata),)
+    AP.convert_arguments(P, gbmesh(visdata))
 end
 
 ################################################################################
@@ -144,7 +148,7 @@ end
 
 single(x) = x
 function single(x::Union{VectorValue, TensorValue})
-    @assert length(x) == 1
+    @assert length(x) === 1
     x[1]
 end
 
