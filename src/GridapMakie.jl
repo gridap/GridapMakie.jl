@@ -22,8 +22,8 @@ function GeometryBasics.Mesh(grid::UnstructuredGrid)
     return GeometryBasics.Mesh(GeometryBasics.connect(ps,fs))
 end
 
-Makie.convert_arguments(::Type{<:Makie.Mesh},grid::UnstructuredGrid) = (GeometryBasics.Mesh(grid),)
+Makie.convert_arguments(::Type{<:Makie.Mesh},grid::Grid) = (GeometryBasics.Mesh(grid),)
 
-Makie.convert_arguments(::Type{<:Makie.Wireframe},grid::UnstructuredGrid) = (GeometryBasics.Mesh(grid),)
+Makie.convert_arguments(::Type{<:Makie.Wireframe},grid::Grid) = (GeometryBasics.Mesh(grid),)
 
 end #module
