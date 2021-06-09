@@ -1,41 +1,36 @@
 module TestGridapMakie
 
 using GridapMakie
-using Test
 using CairoMakie
+using Test
+
 using Gridap
-using Gridap.Visualization
-import AbstractPlotting; const AP = AbstractPlotting
+using Gridap.Geometry
+using Gridap.ReferenceFEs
+
 import FileIO
+
+model = CartesianDiscreteModel((0.,1.5,0.,1.),(15,10)) |> simplexify
+grid = get_grid(model)
+celldata = rand(num_cells(grid))
+nodaldata = rand(num_nodes(grid))
 
 const OUTDIR = joinpath(@__DIR__, "output")
 rm(OUTDIR, force=true, recursive=true)
 mkpath(OUTDIR)
 
-function demo(verb, suffix::String ;spacedim, valuetype, kw...)
+function demo(verb, suffix::String ; grid, kw...)
     println("*"^80)
-    visdata = GridapMakie.demo_visdata(;spacedim=spacedim, valuetype=valuetype)
     filename = "$(verb)_$(suffix).png"
-    @show filename
-    @show verb
-    verb(visdata; kw...)
-
-    data = GridapMakie.demo_data(;spacedim=spacedim, valuetype=valuetype)
-    args = if data.u !== nothing
-        (data.u, data.model)
-    else
-        (data.model, )
-    end
-    @show typeof(args)
-    scene = verb(args...; kw...)
+    scene = verb(grid; kw...)
     path = joinpath(OUTDIR, filename)
     FileIO.save(path, scene)
     return true
 end
 
 @testset "smoketests" begin
-    @test demo(mesh, "2d", spacedim=2, valuetype=nothing)
-    #@test demo(wireframe, "2d", spacedim=2, valuetype=Float64)
+    @test demo(mesh, "2d", grid=grid)
+    @test demo(wireframe, "2d", grid=grid)
 end
 
-end#module
+end #module
