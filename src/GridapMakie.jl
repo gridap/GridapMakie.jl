@@ -4,6 +4,7 @@ using Gridap
 using Gridap.Geometry
 using Gridap.ReferenceFEs
 
+#import AbstractPlotting
 import Makie
 import GeometryBasics
 
@@ -22,8 +23,7 @@ function GeometryBasics.Mesh(grid::UnstructuredGrid)
     return GeometryBasics.Mesh(GeometryBasics.connect(ps,fs))
 end
 
-Makie.convert_arguments(::Type{<:Makie.Mesh},grid::Grid) = (GeometryBasics.Mesh(grid),)
-
-Makie.convert_arguments(::Type{<:Makie.Wireframe},grid::Grid) = (GeometryBasics.Mesh(grid),)
+#AbstractPlotting.convert_arguments(::AbstractPlotting.PlotFunc,grid::Grid) = (GeometryBasics.Mesh(grid),)
+Makie.convert_arguments(::Makie.PlotFunc,grid::Grid) = (GeometryBasics.Mesh(grid),)
 
 end #module

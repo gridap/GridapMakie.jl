@@ -19,9 +19,11 @@ const OUTDIR = joinpath(@__DIR__, "output")
 rm(OUTDIR, force=true, recursive=true)
 mkpath(OUTDIR)
 
-function demo(verb, suffix::String ; grid, kw...)
+function demo(verb, suffix::String, grid; kw...)
     println("*"^80)
     filename = "$(verb)_$(suffix).png"
+    @show filename
+    @show verb
     scene = verb(grid; kw...)
     path = joinpath(OUTDIR, filename)
     FileIO.save(path, scene)
@@ -29,8 +31,10 @@ function demo(verb, suffix::String ; grid, kw...)
 end
 
 @testset "smoketests" begin
-    @test demo(mesh, "2d", grid=grid)
-    @test demo(wireframe, "2d", grid=grid)
+    @test demo(mesh, "2d", grid; color=:red)
+    @test demo(mesh, "2d_nodaldata", grid, color=nodaldata)
+    @test demo(mesh, "2d_nodaldata_colormap", grid, color=nodaldata; colormap =:heat)
+    @test demo(wireframe, "2d", grid; color=:green, linewidth=2)
 end
 
 end #module
