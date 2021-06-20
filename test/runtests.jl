@@ -10,25 +10,29 @@ using Gridap.ReferenceFEs
 
 import FileIO
 
-model = CartesianDiscreteModel((0.,1.5,0.,1.),(15,10)) |> simplexify
-quad_model = CartesianDiscreteModel((0.,1.5,0.,1.),(15,10))
+model_2D = CartesianDiscreteModel((0.,1.5,0.,1.),(15,10)) |> simplexify
+model_3D = CartesianDiscreteModel((0.,1.5,0.,1.,0.,2.),(15,10,10)) |> simplexify
+quad_model_2D = CartesianDiscreteModel((0.,1.5,0.,1.),(15,10))
 
-grid = get_grid(model)
-quad_grid = get_grid(quad_model)
+grid_2D = get_grid(model_2D)
+grid_3D = get_grid(model_3D)
+quad_grid_2D = get_grid(quad_model_2D)
 
-celldata = rand(num_cells(quad_grid))
-nodaldata = rand(num_nodes(quad_grid))
+celldata_2D = rand(num_cells(grid_2D))
+nodaldata_2D = 10*rand(num_nodes(grid_2D)) .+ 1
+quad_nodaldata_2D = 10*rand(num_nodes(grid_2D)) .+ 1
+celldata_3D = rand(num_cells(grid_3D))
+nodaldata_3D = 10*rand(num_nodes(grid_3D)) .+ 1
 
 const OUTDIR = joinpath(@__DIR__, "output")
 rm(OUTDIR, force=true, recursive=true)
 mkpath(OUTDIR)
 
-function demo(verb, suffix::String, grid; colorbar = false, kw...)
+function demo(f, suffix::String, grid; colorbar=false)
     println("*"^80)
-    filename = "$(verb)_$(suffix).png"
+    filename = "$(suffix).png"
     @show filename
-    @show verb
-    fig, ax, tp = verb(grid; kw...)
+    fig, ax, tp = f(grid)
     if colorbar
         Colorbar(fig[1,2], tp)
     end
@@ -38,16 +42,27 @@ function demo(verb, suffix::String, grid; colorbar = false, kw...)
 end
 
 @testset "smoketests" begin
-    @test demo(mesh, "2d", grid; color=:purple)
-    @test demo(mesh, "2d_nodal", grid, color=nodaldata)
-    @test demo(mesh, "2d_nodal_colormap&bar", grid, color=nodaldata; colorbar=true, colormap =:heat)
-    @test demo(wireframe, "2d", grid; color=:green, linewidth=5)
-    #@test demo(mesh, "2d_MeshViz_edges", grid)
-    #@test demo(mesh, "2d_MeshViz_nodal", grid; facetcolor=nodaldata)
-    @test demo(mesh, "2d_quad", quad_grid; color=:red)
-    #@test demo(mesh, "2d_quad_MeshViz", quad_grid; elementcolor=celldata, colorbar=true)
-    #@test demo(mesh, "2d_quad_MeshViz_2", quad_grid; facetcolor=:blue, showfacets=true)
-    @test demo(wireframe, "2d_quad", quad_grid; color=:black, linewidth=2)
+    @test demo("mesh_2d", grid_2D) do grid
+        mesh(grid, color=:purple)
+    end
+    @test demo("mesh_2d_colormap&bar", grid_2D; colorbar=true) do grid
+        mesh(grid, color=nodaldata_2D; colormap =:heat)
+    end
+    @test demo("wireframe_2d", grid_2D) do grid
+        wireframe(grid; color=:green, linewidth=2.5)
+    end
+    @test demo("quad_mesh_2d", quad_grid_2D) do grid
+        mesh(grid; color=:red)
+    end
+    @test demo("mesh_3d", grid_3D) do grid
+        mesh(grid, color=:purple)
+    end
+    @test demo("mesh_3d_colormap&bar", grid_3D; colorbar=true) do grid
+        mesh(grid, color=nodaldata_3D; colormap =:Spectral)
+    end
+    @test demo("wireframe_3d", grid_3D) do grid
+        wireframe(grid; color=:blue, linewidth=.5)
+    end
 end
 
 end #module
