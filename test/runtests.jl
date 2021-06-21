@@ -28,40 +28,43 @@ const OUTDIR = joinpath(@__DIR__, "output")
 rm(OUTDIR, force=true, recursive=true)
 mkpath(OUTDIR)
 
-function demo(f, suffix::String, grid; colorbar=false)
+function savefig(f, suffix::String; colorbar=false)
+    fig = f()
     println("*"^80)
     filename = "$(suffix).png"
     @show filename
-    fig, ax, tp = f(grid)
-    if colorbar
-        Colorbar(fig[1,2], tp)
-    end
     path = joinpath(OUTDIR, filename)
     FileIO.save(path, fig)
     return true
 end
 
-@testset "smoketests" begin
-    @test demo("mesh_2d", grid_2D) do grid
-        mesh(grid, color=:purple)
+@testset "GridapMakieTests" begin
+    @test savefig("mesh_2d") do
+        mesh(grid_2D, color=:purple)
     end
-    @test demo("mesh_2d_colormap&bar", grid_2D; colorbar=true) do grid
-        mesh(grid, color=nodaldata_2D; colormap =:heat)
+    @test savefig("mesh_2d_colormap&bar") do
+        fig,_,tp = mesh(grid_2D, color=nodaldata_2D; colormap =:heat)
+        Colorbar(fig[1,2], tp)
+        fig
     end
-    @test demo("wireframe_2d", grid_2D) do grid
-        wireframe(grid; color=:green, linewidth=2.5)
+    @test savefig("wireframe_2d") do
+        fig, = wireframe(grid_2D; color=:green, linewidth=2.5)
+        fig
     end
-    @test demo("quad_mesh_2d", quad_grid_2D) do grid
-        mesh(grid; color=:red)
+    @test savefig("quad_mesh_2d", ) do
+        fig, = mesh(quad_grid_2D; color=:red)
+        fig
     end
-    @test demo("mesh_3d", grid_3D) do grid
-        mesh(grid, color=:purple)
+    @test savefig("mesh_3d") do
+        mesh(grid_3D, color=:purple)
     end
-    @test demo("mesh_3d_colormap&bar", grid_3D; colorbar=true) do grid
-        mesh(grid, color=nodaldata_3D; colormap =:Spectral)
+    @test savefig("mesh_3d_colormap&bar") do
+        fig,_,tp = mesh(grid_3D, color=nodaldata_3D; colormap =:Spectral)
+        Colorbar(fig[1,2], tp)
+        fig
     end
-    @test demo("wireframe_3d", grid_3D) do grid
-        wireframe(grid; color=:blue, linewidth=.5)
+    @test savefig("wireframe_3d") do
+        fig, = wireframe(grid_3D; color=:blue, linewidth=.5)
     end
 end
 
