@@ -9,22 +9,33 @@ function GeometryBasics.Mesh(grid::CartesianGrid)
     GeometryBasics.Mesh(simplexify(grid))
 end
 
+function get_boundary_grid(grid::UnstructuredGrid)
+    topo = GridTopology(grid)
+    labels = FaceLabeling(topo)
+    model = DiscreteModel(grid,topo,labels)
+    face_grid = Grid(ReferenceFE{2},model)
+    face_to_mask = get_face_mask(labels,"boundary",2)
+    return GridPortion(face_grid,face_to_mask) |> simplexify
+end
+
+function _simplex_grid_2_mesh(grid)
+    reffes = get_reffes(grid)
+    @assert all(reffe->get_order(reffe)==1,reffes)
+    xs = get_node_coordinates(grid)
+    Tp = eltype(eltype(xs))
+    Dp = length(eltype(xs))
+    ps = collect(reinterpret(GeometryBasics.Point{Dp,Tp},xs))
+    cns = get_cell_node_ids(grid)
+    Tc = eltype(eltype(cns))
+    Dc = num_cell_dims(grid)
+    fs = collect(lazy_map(GeometryBasics.NgonFace{Dc+1,Tc},cns))
+    return GeometryBasics.Mesh(GeometryBasics.connect(ps,fs)) |> GeometryBasics.normal_mesh
+end
+
 function GeometryBasics.Mesh(grid::UnstructuredGrid)
-    function _simplex_grid_2_mesh(grid)
-        reffes = get_reffes(grid)
-        @assert all(reffe->get_order(reffe)==1,reffes)
-        xs = get_node_coordinates(grid)
-        Tp = eltype(eltype(xs))
-        D = length(eltype(xs))
-        ps = collect(reinterpret(GeometryBasics.Point{D,Tp},xs))
-        cns = get_cell_node_ids(grid)
-        Tf = eltype(eltype(cns))
-        fs = collect(lazy_map(GeometryBasics.SimplexFace{D+1,Tf},cns))
-        m = if eltype(fs) <: GeometryBasics.Triangle{}
-                GeometryBasics.Mesh(GeometryBasics.connect(ps,fs)) 
-            else
-                GeometryBasics.Mesh(GeometryBasics.connect(ps,fs)) |> GeometryBasics.normal_mesh
-            end
+    if num_cell_dims(grid) == 3
+        boundary_grid = get_boundary_grid(grid)
+        return GeometryBasics.Mesh(boundary_grid) 
     end
     reffes = get_reffes(grid)
     polys = map(get_polytope,reffes)
