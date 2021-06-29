@@ -39,7 +39,7 @@ function savefig(f, suffix::String; colorbar=false)
 end
 
 @testset "GridapMakieTests" begin
-    #=@test savefig("mesh_2d") do
+    @test savefig("mesh_2d") do
         mesh(grid_2D, color=:purple)
     end
     @test savefig("mesh_2d_colormap&bar") do
@@ -54,18 +54,18 @@ end
     @test savefig("quad_mesh_2d", ) do
         fig, = mesh(quad_grid_2D; color=:red)
         fig
-    end=#
+    end
     @test savefig("mesh_3d") do
         mesh(grid_3D, color=:purple)
     end
-    #=@test savefig("mesh_3d_colormap&bar") do
+    @test savefig("mesh_3d_colormap&bar") do
         fig,_,tp = mesh(grid_3D, color=nodaldata_3D; colormap =:Spectral)
         Colorbar(fig[1,2], tp)
         fig
     end
     @test savefig("wireframe_3d") do
         fig, = wireframe(grid_3D; color=:blue, linewidth=.5)
-    end=#
+    end
 end
 
 end #module
