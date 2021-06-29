@@ -1,55 +1,71 @@
 module TestGridapMakie
 
 using GridapMakie
+using CairoMakie
 using Test
-using Makie
+
 using Gridap
-using Gridap.Visualization
-import AbstractPlotting; const AP = AbstractPlotting
+using Gridap.Geometry
+using Gridap.ReferenceFEs
+
 import FileIO
+
+model_2D = CartesianDiscreteModel((0.,1.5,0.,1.),(15,10)) |> simplexify
+model_3D = CartesianDiscreteModel((0.,1.5,0.,1.,0.,2.),(5,5,5)) |> simplexify
+quad_model_2D = CartesianDiscreteModel((0.,1.5,0.,1.),(15,10))
+
+grid_2D = get_grid(model_2D)
+grid_3D = get_grid(model_3D)
+quad_grid_2D = get_grid(quad_model_2D)
+
+celldata_2D = rand(num_cells(grid_2D))
+nodaldata_2D = 10*rand(num_nodes(grid_2D)) .+ 1
+quad_nodaldata_2D = 10*rand(num_nodes(grid_2D)) .+ 1
+celldata_3D = rand(num_cells(grid_3D))
+nodaldata_3D = 10*rand(num_nodes(grid_3D)) .+ 1
 
 const OUTDIR = joinpath(@__DIR__, "output")
 rm(OUTDIR, force=true, recursive=true)
 mkpath(OUTDIR)
 
-function demo(verb, suffix::String ;spacedim, valuetype, kw...)
+function savefig(f, suffix::String; colorbar=false)
+    fig = f()
     println("*"^80)
-    visdata = GridapMakie.demo_visdata(;spacedim=spacedim, valuetype=valuetype)
-    filename = "$(verb)_$(suffix).png"
+    filename = "$(suffix).png"
     @show filename
-    @show verb
-    verb(visdata; kw...)
-
-    data = GridapMakie.demo_data(spacedim=spacedim, valuetype=valuetype)
-    args = if data.u !== nothing
-        (data.u, data.model)
-    else
-        (data.model, )
-    end
-    @show typeof(args)
-    scene = verb(args...; kw...)
     path = joinpath(OUTDIR, filename)
-    FileIO.save(path, scene)
+    FileIO.save(path, fig)
     return true
 end
-# visdata
 
-@testset "smoketests" begin
-    @test demo(wireframe, "2d", spacedim=2, valuetype=nothing)
-    @test demo(wireframe, "2d_Scalar", spacedim=2, valuetype=Float64)
-    @test demo(plot, "2d", spacedim=2, valuetype=nothing)
-    @test demo(plot, "1d_Scalar", spacedim=1, valuetype=Float64)
-    @test demo(lines, "1d_Scalar", spacedim=1, valuetype=Float64)
-    @test demo(scatter, "1d_Scalar", spacedim=1, valuetype=Float64)
-    @test demo(plot, "1d_Vec1d", spacedim=1, valuetype=VectorValue{1,Float64})
-    @test demo(lines, "1d_Vec1d", spacedim=1, valuetype=VectorValue{1,Float64})
-    @test demo(quiver, "1d_Vec1d", spacedim=1, valuetype=VectorValue{1,Float64})
-    @test demo(plot, "2d_Scalar", spacedim=2, valuetype=Float64)
-    @test demo(plot, "2d_Vec2d", spacedim=2, valuetype=VectorValue{2,Float64}, arrowcolor=:red, arrowsize=0.1)
-    @test demo(plot, "3d_Vec3d", spacedim=3, valuetype=VectorValue{3,Float64}, arrowsize=0.1)
-    @test demo(quiver, "3d_Vec3d", spacedim=3, valuetype=VectorValue{3,Float64}, arrowsize=0.1)
-    @test demo(plot, "1d_Vec2d", spacedim=1, valuetype=VectorValue{2,Float64}, arrowcolor=:blue)
-    @test_broken demo(plot, "1d_Scalar_Scalar", spacedim=1, valuetype=[Float64, Float64])
+@testset "GridapMakieTests" begin
+    @test savefig("mesh_2d") do
+        mesh(grid_2D, color=:purple)
+    end
+    @test savefig("mesh_2d_colormap&bar") do
+        fig,_,tp = mesh(grid_2D, color=nodaldata_2D; colormap =:heat)
+        Colorbar(fig[1,2], tp)
+        fig
+    end
+    @test savefig("wireframe_2d") do
+        fig, = wireframe(grid_2D; color=:green, linewidth=2.5)
+        fig
+    end
+    @test savefig("quad_mesh_2d", ) do
+        fig, = mesh(quad_grid_2D; color=:red)
+        fig
+    end
+    @test savefig("mesh_3d") do
+        mesh(grid_3D, color=:purple)
+    end
+    @test savefig("mesh_3d_colormap&bar") do
+        fig,_,tp = mesh(grid_3D, color=nodaldata_3D; colormap =:Spectral)
+        Colorbar(fig[1,2], tp)
+        fig
+    end
+    @test savefig("wireframe_3d") do
+        fig, = wireframe(grid_3D; color=:blue, linewidth=.5)
+    end
 end
 
-end#module
+end #module
