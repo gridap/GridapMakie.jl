@@ -1,5 +1,6 @@
-
-Makie.convert_arguments(::Makie.PlotFunc, grid::Grid) = ( grid |> to_plot_mesh, )
+Makie.convert_arguments(::Type{<:Makie.Mesh}, grid::Grid) = ( grid |> to_plot_mesh, )
+Makie.convert_arguments(::Type{<:Makie.Wireframe}, grid::Grid) = ( grid |> to_plot_mesh, )
+#Makie.convert_arguments(::Makie.PlotFunc, grid::Grid) = ( grid |> to_plot_mesh, )
 
 function to_plot_mesh(grid::Grid)
   grid |> UnstructuredGrid |> to_plot_mesh

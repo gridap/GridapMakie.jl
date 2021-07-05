@@ -1,5 +1,6 @@
 module GridapMakie
 
+using Gridap.Visualization: include
 using Gridap
 using Gridap.Geometry
 using Gridap.ReferenceFEs
@@ -8,6 +9,10 @@ using Gridap.Visualization
 import Makie
 import GeometryBasics
 
-include("Makie_conversion.jl")
+include("conversions.jl")
+
+include("faces.jl")
+
+include("edges.jl")
 
 end #module
