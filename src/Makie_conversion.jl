@@ -1,6 +1,5 @@
-Makie.convert_arguments(::Type{<:Makie.Mesh}, grid::Grid) = ( grid |> to_plot_mesh, )
-Makie.convert_arguments(::Type{<:Makie.Wireframe}, grid::Grid) = ( grid |> to_plot_mesh, )
-#Makie.convert_arguments(::Makie.PlotFunc, grid::Grid) = ( grid |> to_plot_mesh, )
+
+Makie.convert_arguments(::Makie.PlotFunc, grid::Grid) = ( grid |> to_plot_mesh, )
 
 function to_plot_mesh(grid::Grid)
   grid |> UnstructuredGrid |> to_plot_mesh
@@ -50,13 +49,6 @@ function to_mesh(grid::UnstructuredGrid)
   Dc = num_cell_dims(grid)
   fs = collect(lazy_map(GeometryBasics.NgonFace{Dc+1,Tc},cns))
   GeometryBasics.Mesh(GeometryBasics.connect(ps,fs))
-end
-
-function to_edge_grid(grid::UnstructuredGrid)
-  topo = GridTopology(grid)
-  labels = FaceLabeling(topo)
-  model = DiscreteModel(grid,topo,labels)
-  Grid(ReferenceFE{1},model)
 end
 
 #=function Makie.wireframe(grid::CartesianGrid; kw...)
