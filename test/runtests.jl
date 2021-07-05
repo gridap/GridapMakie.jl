@@ -40,6 +40,10 @@ end
 
 @testset "GridapMakieTests" begin
     @test savefig("mesh_2d") do
+        fig, scene = faces(grid_2D,color=:blue)
+        edges!(scene,grid_2D,linewidth=4)
+    end
+    #=@test savefig("mesh_2d") do
         mesh(grid_2D, color=:purple)
     end
     @test savefig("mesh_2d_colormap&bar") do
@@ -65,7 +69,7 @@ end
     end
     @test savefig("wireframe_3d") do
         fig, = wireframe(grid_3D; color=:blue, linewidth=.5)
-    end
+    end=#
 end
 
 end #module

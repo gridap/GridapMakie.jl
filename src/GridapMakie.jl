@@ -8,6 +8,10 @@ using Gridap.Visualization
 import Makie
 import GeometryBasics
 
-include("Makie_conversion.jl")
+include("conversions.jl")
+
+include("faces.jl")
+
+include("edges.jl")
 
 end #module
