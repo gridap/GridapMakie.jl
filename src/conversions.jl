@@ -52,6 +52,13 @@ function to_mesh(grid::UnstructuredGrid)
   GeometryBasics.Mesh(GeometryBasics.connect(ps,fs))
 end
 
+function to_edge_grid(grid::UnstructuredGrid)
+  topo = GridTopology(grid)
+  labels = FaceLabeling(topo)
+  model = DiscreteModel(grid,topo,labels)
+  Grid(ReferenceFE{1},model)
+end
+
 #=function Makie.wireframe(grid::CartesianGrid; kw...)
     ls = GeometryBasics.Point2f0[]
     cns = get_cell_node_ids(grid)

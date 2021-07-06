@@ -40,7 +40,8 @@ end
 
 @testset "GridapMakieTests" begin
     @test savefig("mesh_2d") do
-        faces(grid_2D, color=:purple)
+        scene = faces(grid_2D, color=:purple)
+        edges!(scene, grid_2D, color=:green, linewidth=4)
     end
     #=@test savefig("mesh_2d_colormap&bar") do
         fig,_,tp = mesh(grid_2D, color=nodaldata_2D; colormap =:heat)

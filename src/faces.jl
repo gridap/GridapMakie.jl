@@ -2,8 +2,10 @@
 # Create recipe: 
 
 @Makie.recipe(Faces, grid) do scene
-    #Makie.default_theme(scene, Makie.Mesh)
+    
     Makie.Attributes(;
+      Makie.default_theme(scene)...,
+      
       # generic attributes
       colormap = Makie.theme(scene, :colormap),
       color = Makie.theme(scene, :linecolor),
