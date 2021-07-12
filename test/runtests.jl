@@ -1,4 +1,4 @@
-module TestGridapMakie
+#module TestGridapMakie
 
 using GridapMakie
 using CairoMakie
@@ -28,7 +28,7 @@ const OUTDIR = joinpath(@__DIR__, "output")
 rm(OUTDIR, force=true, recursive=true)
 mkpath(OUTDIR)
 
-function savefig(f, suffix::String; colorbar=false)
+function savefig(f, suffix::String)
     fig = f()
     println("*"^80)
     filename = "$(suffix).png"
@@ -40,8 +40,10 @@ end
 
 @testset "GridapMakieTests" begin
     @test savefig("mesh_2d") do
-        scene = faces(grid_2D, color=:purple)
-        edges!(scene, grid_2D, color=:green, linewidth=4)
+        fig, ax, plt = faces(grid_2D, color=celldata_2D, fieldstyle=:cells)
+        Colorbar(fig[1,2], plt)
+        #edges!(ax,grid_2D)
+        fig
     end
     #=@test savefig("mesh_2d_colormap&bar") do
         fig,_,tp = mesh(grid_2D, color=nodaldata_2D; colormap =:heat)
@@ -69,4 +71,4 @@ end
     end=#
 end
 
-end #module
+#end #module

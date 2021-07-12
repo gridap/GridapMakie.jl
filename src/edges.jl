@@ -2,30 +2,34 @@
 # Create recipe: 
 
 @Makie.recipe(Edges, grid) do scene
-    #Makie.default_theme(scene, Makie.LineSegments)
     Makie.Attributes(;
-      # generic attributes
-      colormap = Makie.theme(scene, :colormap),
-      color = Makie.theme(scene, :linecolor),
-      linewidth = Makie.theme(scene, :linewidth),
-  
-      # new attributes
-      fieldstyle = :nodes
+      Makie.default_theme(scene, Makie.Lines)...,
+      color = :khaki,
+      cycle = nothing
     )
-  end
+end
   
   # Plot! especialization:
   
-  function Makie.plot!(plot::Edges{<:Tuple{Grid}})
-   
-    grid = plot[:grid][]
-    color = plot[:color][]
-    linewidth = plot[:linewidth][]
+function Makie.plot!(plot::Edges{<:Tuple{Grid}})
   
+  # Retrieve plot arguments:
+  grid      = plot[:grid][]
+  color     = plot[:color][]
+  linewidth = plot[:linewidth][]
+  colormap  = plot[:colormap]
+
+  if color isa AbstractVector
+    plot[:colorrange][] = extrema(color)
     faces!(plot, grid |> to_edge_grid,
-      color = color,
+      color     = color,
       linewidth = linewidth,
-      colormap = plot[:colormap]
+      colormap  = colormap
       )
-  
+  else 
+    faces!(plot, grid |> to_edge_grid,
+      color     = color,
+      linewidth = linewidth
+      )
   end
+end

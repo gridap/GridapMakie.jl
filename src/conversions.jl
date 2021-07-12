@@ -1,20 +1,20 @@
 Makie.convert_arguments(::Type{<:Makie.Mesh}, grid::Grid) = ( grid |> to_plot_mesh, )
-Makie.convert_arguments(::Type{<:Makie.Wireframe}, grid::Grid) = ( grid |> to_plot_mesh, )
+#Makie.convert_arguments(::Type{<:Makie.Wireframe}, grid::Grid) = ( grid |> to_plot_mesh, )
 #Makie.convert_arguments(::Makie.PlotFunc, grid::Grid) = ( grid |> to_plot_mesh, )
 
 function to_plot_mesh(grid::Grid)
-  grid |> UnstructuredGrid |> to_plot_mesh
+  UnstructuredGrid(grid) |> to_plot_mesh
 end
 
 function to_plot_mesh(grid::CartesianGrid)
-  grid |> simplexify |> to_plot_mesh
+  simplexify(grid) |> to_plot_mesh
 end
 
 function to_plot_mesh(grid::UnstructuredGrid)
   if num_cell_dims(grid) == 3
-    grid |> to_boundary_grid |> to_simplex_grid |> to_mesh |> GeometryBasics.normal_mesh
+    to_boundary_grid(grid) |> to_simplex_grid |> to_mesh |> GeometryBasics.normal_mesh
   else
-    grid |> to_simplex_grid |> to_mesh
+    to_simplex_grid(grid) |> to_mesh
   end
 end
 
@@ -34,7 +34,7 @@ function to_boundary_grid(grid::UnstructuredGrid)
 end
 
 function to_mesh(grid::Grid)
-  grid |> UnstructuredGrid |> to_mesh
+  UnstructuredGrid(grid) |> to_mesh
 end
 
 function to_mesh(grid::UnstructuredGrid)
@@ -42,37 +42,19 @@ function to_mesh(grid::UnstructuredGrid)
   @assert all(reffe->get_order(reffe)==1,reffes)
   @assert all(reffe->is_simplex(get_polytope(reffe)),reffes)
   xs = get_node_coordinates(grid)
-  Tp = eltype(eltype(xs))
-  Dp = length(eltype(xs))
-  ps = collect(reinterpret(GeometryBasics.Point{Dp,Tp},xs))
+  Tp = eltype(xs) |> eltype
+  Dp = eltype(xs) |> length
+  ps = reinterpret(GeometryBasics.Point{Dp,Tp},xs) |> collect
   cns = get_cell_node_ids(grid)
-  Tc = eltype(eltype(cns))
+  Tc = eltype(cns) |> eltype
   Dc = num_cell_dims(grid)
-  fs = collect(lazy_map(GeometryBasics.NgonFace{Dc+1,Tc},cns))
-  GeometryBasics.Mesh(GeometryBasics.connect(ps,fs))
+  fs = lazy_map(GeometryBasics.NgonFace{Dc+1,Tc},cns) |> collect
+  GeometryBasics.connect(ps,fs) |> GeometryBasics.Mesh
 end
 
-function to_edge_grid(grid::UnstructuredGrid)
+function to_edge_grid(grid::Grid)
   topo = GridTopology(grid)
   labels = FaceLabeling(topo)
   model = DiscreteModel(grid,topo,labels)
   Grid(ReferenceFE{1},model)
 end
-
-#=function Makie.wireframe(grid::CartesianGrid; kw...)
-    ls = GeometryBasics.Point2f0[]
-    cns = get_cell_node_ids(grid)
-    xs = get_node_coordinates(grid)
-    Tp = eltype(eltype(xs))
-    D = length(eltype(xs))
-    xs = collect(reinterpret(GeometryBasics.Point{D,Tp},xs))
-    for quad in cns # Draw segments counter-clockwise starting from bottom-left.
-        push!(ls,
-            xs[quad[1]], xs[quad[2]],
-            xs[quad[2]], xs[quad[4]],
-            xs[quad[4]], xs[quad[3]],
-            xs[quad[3]], xs[quad[1]],
-        )
-    end
-    Makie.linesegments(ls; kw...)
-end=#

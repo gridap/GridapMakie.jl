@@ -1,6 +1,6 @@
 module GridapMakie
 
-using Gridap.Visualization: include
+using Gridap.Visualization
 using Gridap
 using Gridap.Geometry
 using Gridap.ReferenceFEs
