@@ -6,7 +6,11 @@
       Makie.default_theme(scene, Makie.Mesh)...,
 
       # Custom arguments:
-      color      = :darkmagenta,
+      color      = :pink,
+      colormap   = :bluesreds,
+      colorrange = nothing,
+
+      # Otherwise, 2D plots don't use custom default colors.
       cycle      = nothing,
       fieldstyle = :nodes
     )
@@ -37,23 +41,34 @@ function plot_Ngon_faces!(plot::Faces{<:Tuple{Grid}}, grid::Grid)
 
   # Represent a field:
   if color isa AbstractVector
-    plot[:colorrange][] = extrema(color)
+    if plot[:colorrange][] === nothing
+      plot[:colorrange][] = extrema(color)
+    end
+
+    # Nodal field:
     if fieldstyle == :nodes
       Makie.mesh!(plot, grid, 
-        color    = color,
-        colormap = colormap
+        color      = color,
+        colormap   = colormap,
+        colorrange = plot[:colorrange][]
         )
+
+    # Cell field:
     elseif fieldstyle == :cells
-      _grid = to_mesh(grid)
+      _grid = dimension_dispatch(grid)
+      xs, cns = get_nodes_and_ids(_grid)
+
+      # Create colormap from color:
       cmap = Makie.interpolated_getindex.(
-              Ref(Makie.to_colormap(colormap, length(_grid))),
+              Ref(Makie.to_colormap(colormap, num_cells(_grid))),
               Float64.(color),
               Ref(plot[:colorrange][])
               )
-      for (ctr, face) in enumerate(_grid)
-        Makie.mesh!(plot, face,
+      for (ctr,face) in enumerate(cns)
+        Makie.mesh!(plot, xs[face],
+          color      = cmap[ctr],
           colormap   = colormap,
-          color      = cmap[ctr]
+          colorrange = plot[:colorrange][]
           )
       end
     else
@@ -78,18 +93,18 @@ function plot_Ngon_edges!(plot::Faces{<:Tuple{Grid}}, grid::Grid)
   colormap   = plot[:colormap][]
 
   # Grid transformation:
-  xs = get_node_coordinates(grid)
-  Tp = eltype(xs) |> eltype
-  Dp = eltype(xs) |> length
-  xs = reinterpret(GeometryBasics.Point{Dp,Tp},xs) |> collect
-  cns = get_cell_node_ids(grid)
-  ls = GeometryBasics.Point{Dp,Tp}[]
+  xs, cns = get_nodes_and_ids(grid)
+  ls = GeometryBasics.Point{eltype(xs) |> length, 
+                            eltype(xs) |> eltype}[]
+
+  # Color attributes:
+  colortype = eltype(color)
+  colors = colortype[]
 
   if color isa AbstractVector
-    plot[:colorrange][] = extrema(color)
-    colortype = eltype(color)
-    colors = colortype[]
-
+    if plot[:colorrange][] === nothing
+      plot[:colorrange][] = extrema(color)
+    end
     # Draw every segment and assign a color separately:
     for edge in cns 
       push!(ls,
@@ -100,15 +115,25 @@ function plot_Ngon_edges!(plot::Faces{<:Tuple{Grid}}, grid::Grid)
       )
     end
 
-  # Single color:
-  else
-    colors = color
+  else 
+    # Single color:
+    colors=color
     for edge in cns
       push!(ls,
           xs[edge[1]], xs[edge[2]]
       )
+
+      # Concatenate colors to avoid empty corners:
+      #push!(colors,
+       #   color, color
+      #)
     end
   end
 
-  Makie.linesegments!(plot, ls, color=colors, linewidth=linewidth, colormap=colormap)
+  Makie.lines!(plot, ls, 
+    color      = colors, 
+    linewidth  = linewidth, 
+    colormap   = colormap, 
+    colorrange = plot[:colorrange][]
+    )
 end

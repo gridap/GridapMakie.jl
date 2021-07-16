@@ -10,12 +10,16 @@ function to_plot_mesh(grid::CartesianGrid)
   simplexify(grid) |> to_plot_mesh
 end
 
-function to_plot_mesh(grid::UnstructuredGrid)
+function dimension_dispatch(grid::UnstructuredGrid)
   if num_cell_dims(grid) == 3
-    to_boundary_grid(grid) |> to_simplex_grid |> to_mesh |> GeometryBasics.normal_mesh
+    to_boundary_grid(grid) |> to_simplex_grid
   else
-    to_simplex_grid(grid) |> to_mesh
+    to_simplex_grid(grid) 
   end
+end
+
+function to_plot_mesh(grid::UnstructuredGrid)
+  dimension_dispatch(grid) |> to_mesh |> GeometryBasics.normal_mesh
 end
 
 function to_simplex_grid(grid)
@@ -41,11 +45,7 @@ function to_mesh(grid::UnstructuredGrid)
   reffes = get_reffes(grid)
   @assert all(reffe->get_order(reffe)==1,reffes)
   @assert all(reffe->is_simplex(get_polytope(reffe)),reffes)
-  xs = get_node_coordinates(grid)
-  Tp = eltype(xs) |> eltype
-  Dp = eltype(xs) |> length
-  ps = reinterpret(GeometryBasics.Point{Dp,Tp},xs) |> collect
-  cns = get_cell_node_ids(grid)
+  ps, cns = get_nodes_and_ids(grid)
   Tc = eltype(cns) |> eltype
   Dc = num_cell_dims(grid)
   fs = lazy_map(GeometryBasics.NgonFace{Dc+1,Tc},cns) |> collect
@@ -57,4 +57,13 @@ function to_edge_grid(grid::Grid)
   labels = FaceLabeling(topo)
   model = DiscreteModel(grid,topo,labels)
   Grid(ReferenceFE{1},model)
+end
+
+function get_nodes_and_ids(grid::Grid)
+  xs = get_node_coordinates(grid)
+  Tp = eltype(xs) |> eltype
+  Dp = eltype(xs) |> length
+  xs = reinterpret(GeometryBasics.Point{Dp,Tp},xs) |> collect
+  cns = get_cell_node_ids(grid)
+  return xs, cns
 end

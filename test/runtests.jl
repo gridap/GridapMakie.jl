@@ -1,4 +1,4 @@
-#module TestGridapMakie
+module TestGridapMakie
 
 using GridapMakie
 using CairoMakie
@@ -19,10 +19,10 @@ grid_3D = get_grid(model_3D)
 quad_grid_2D = get_grid(quad_model_2D)
 
 celldata_2D = rand(num_cells(grid_2D))
-nodaldata_2D = 10*rand(num_nodes(grid_2D)) .+ 1
-quad_nodaldata_2D = 10*rand(num_nodes(grid_2D)) .+ 1
+nodaldata_2D = rand(num_nodes(grid_2D))
+quad_nodaldata_2D = rand(num_nodes(grid_2D))
 celldata_3D = rand(num_cells(grid_3D))
-nodaldata_3D = 10*rand(num_nodes(grid_3D)) .+ 1
+nodaldata_3D = rand(num_nodes(grid_3D))
 
 const OUTDIR = joinpath(@__DIR__, "output")
 rm(OUTDIR, force=true, recursive=true)
@@ -39,36 +39,48 @@ function savefig(f, suffix::String)
 end
 
 @testset "GridapMakieTests" begin
-    @test savefig("mesh_2d") do
-        fig, ax, plt = faces(grid_2D, color=celldata_2D, fieldstyle=:cells)
-        Colorbar(fig[1,2], plt)
-        #edges!(ax,grid_2D)
+    @test savefig("Fig1") do
+        fig = faces(grid_2D)
         fig
     end
-    #=@test savefig("mesh_2d_colormap&bar") do
-        fig,_,tp = mesh(grid_2D, color=nodaldata_2D; colormap =:heat)
-        Colorbar(fig[1,2], tp)
+    @test savefig("Fig2") do
+        fig, ax = faces(grid_3D)
+        edges!(ax, grid_2D)
         fig
     end
-    @test savefig("wireframe_2d") do
-        fig, = wireframe(grid_2D; color=:green, linewidth=2.5)
+    @test savefig("Fig3") do
+        fig, ax = faces(grid_2D)
+        edges!(ax, grid_2D, linewidth=2.5)
         fig
     end
-    @test savefig("quad_mesh_2d", ) do
-        fig, = mesh(quad_grid_2D; color=:red)
+    @test savefig("Fig4") do
+        fig, ax = faces(grid_2D, color=:lightseagreen)
+        edges!(ax, grid_2D, color=:darkslategray)
         fig
     end
-    @test savefig("mesh_3d") do
-        mesh(grid_3D, color=:purple)
-    end
-    @test savefig("mesh_3d_colormap&bar") do
-        fig,_,tp = mesh(grid_3D, color=nodaldata_3D; colormap =:Spectral)
-        Colorbar(fig[1,2], tp)
+    @test savefig("Fig5") do
+        fig = faces(grid_2D, color=celldata_2D, fieldstyle=:cells)
         fig
     end
-    @test savefig("wireframe_3d") do
-        fig, = wireframe(grid_3D; color=:blue, linewidth=.5)
-    end=#
+    @test savefig("Fig6") do
+        fig = faces(grid_2D, color=nodaldata_2D, fieldstyle=:nodes)
+        fig
+    end
+    @test savefig("Fig7") do
+        fig, ax, plt = faces(grid_2D, color=nodaldata_2D, colorrange=(0,1))
+        Colorbar(fig[1,2], plt, ticks=0:0.25:1)
+        fig
+    end
+    @test savefig("Fig8") do
+        fig, ax, plt = faces(grid_2D, color=nodaldata_2D, colormap=:heat, colorrange=(0,1))
+        Colorbar(fig[1,2], plt, ticks=0:0.25:1)
+        fig
+    end
+    @test savefig("Fig9") do
+        fig, ax, plt = edges(grid_2D, color=nodaldata_2D, colorrange=(0,1))
+        Colorbar(fig[1,2], plt, ticks=0:0.25:1)
+        fig
+    end
 end
 
-#end #module
+end #module
