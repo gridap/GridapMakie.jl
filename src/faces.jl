@@ -117,16 +117,16 @@ function plot_Ngon_edges!(plot::Faces{<:Tuple{Grid}}, grid::Grid)
 
   else 
     # Single color:
-    colors=color
+
     for edge in cns
       push!(ls,
           xs[edge[1]], xs[edge[2]]
       )
 
-      # Concatenate colors to avoid empty corners:
-      #push!(colors,
-       #   color, color
-      #)
+      #Concatenate colors to avoid empty corners:
+      push!(colors,
+          color, color
+      )
     end
   end
 
