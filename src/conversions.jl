@@ -10,7 +10,7 @@ function to_plot_mesh(grid::CartesianGrid)
   simplexify(grid) |> to_plot_mesh
 end
 
-function dimension_dispatch(grid::UnstructuredGrid)
+function dimension_dispatch(grid::Grid)
   if num_cell_dims(grid) == 3
     to_boundary_grid(grid) |> to_simplex_grid
   else
@@ -28,7 +28,7 @@ function to_simplex_grid(grid)
   all(is_simplex,polys) ? grid : simplexify(grid)
 end
 
-function to_boundary_grid(grid::UnstructuredGrid)
+function to_boundary_grid(grid::Grid)
   topo = GridTopology(grid)
   labels = FaceLabeling(topo)
   model = DiscreteModel(grid,topo,labels)

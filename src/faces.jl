@@ -55,8 +55,11 @@ function plot_Ngon_faces!(plot::Faces{<:Tuple{Grid}}, grid::Grid)
 
     # Cell field:
     elseif fieldstyle == :cells
+      #face_cons = reshape(get_cell_node_ids(grid),num_cells(grid))
       _grid = dimension_dispatch(grid)
       xs, cns = get_nodes_and_ids(_grid)
+
+      # WE NEED A MAPPING FROM A 3D GRID TO ITS SURFACE FOR THE COLORS!
 
       # Create colormap from color:
       cmap = Makie.interpolated_getindex.(
@@ -64,12 +67,17 @@ function plot_Ngon_faces!(plot::Faces{<:Tuple{Grid}}, grid::Grid)
               Float64.(color),
               Ref(plot[:colorrange][])
               )
+      #for (ctr,face) in enumerate(face_cons)
       for (ctr,face) in enumerate(cns)
-        Makie.mesh!(plot, xs[face],
-          color      = cmap[ctr],
-          colormap   = colormap,
-          colorrange = plot[:colorrange][]
-          )
+        #for i in 1:length(face)-2
+         # triangle = face[i:i+2]
+          #Makie.mesh!(plot, xs[triangle],
+          Makie.mesh!(plot, xs[face],
+            color      = cmap[ctr],
+            colormap   = colormap,
+            colorrange = plot[:colorrange][]
+            )
+        #end
       end
     else
       error("Invalid field to plot")
@@ -130,7 +138,7 @@ function plot_Ngon_edges!(plot::Faces{<:Tuple{Grid}}, grid::Grid)
     end
   end
 
-  Makie.lines!(plot, ls, 
+  Makie.linesegments!(plot, ls, 
     color      = colors, 
     linewidth  = linewidth, 
     colormap   = colormap, 
