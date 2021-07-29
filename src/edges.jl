@@ -1,4 +1,3 @@
-
 # Create recipe: 
 
 @Makie.recipe(Edges, grid) do scene
@@ -10,10 +9,7 @@
       # Custom arguments:
       color      = :brown4,
       colormap   = :bluesreds,
-      colorrange = nothing,
-
-      # Otherwise, 2D plots don't use custom default colors.
-      cycle      = nothing, 
+      colorrange = nothing
     )
 end
   
@@ -24,23 +20,19 @@ function Makie.plot!(plot::Edges{<:Tuple{Grid}})
   # Retrieve plot arguments:
   grid      = plot[:grid][]
   color     = plot[:color][]
-  linewidth = plot[:linewidth][]
-  colormap  = plot[:colormap]
 
   if color isa AbstractVector
     if plot[:colorrange][] === nothing
       plot[:colorrange][] = extrema(color)
     end
-    faces!(plot, grid |> to_edge_grid,
-      color      = color,
-      linewidth  = linewidth,
-      colormap   = colormap,
-      colorrange = plot[:colorrange][]
-      )
-  else 
-    faces!(plot, grid |> to_edge_grid,
-      color     = color,
-      linewidth = linewidth
-      )
   end
+
+  faces!(plot, grid |> to_edge_grid;
+    color     = color,                colormap      = plot[:colormap][],      colorrange   = plot[:colorrange][],
+    ambient   = plot[:ambient][],     diffuse       = plot[:diffuse][],       inspectable  = plot[:inspectable][],
+    linewidth = plot[:linewidth][],   lightposition = plot[:lightposition][], nan_color    = plot[:nan_color][],
+    overdraw  = plot[:overdraw][],    linestyle     = plot[:linestyle][],     shininess    = plot[:shininess][],
+    specular  = plot[:specular][],    ssao          = plot[:ssao][],          transparency = plot[:transparency][], 
+    visible   = plot[:visible][]
+  )
 end

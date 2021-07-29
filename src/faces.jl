@@ -4,15 +4,20 @@
     
       # Use default theme:
       Makie.default_theme(scene, Makie.Mesh)...,
+      Makie.default_theme(scene, Makie.Lines)...,
+      Makie.default_theme(scene, Makie.Scatter)...,
 
       # Custom arguments:
       color      = :pink,
       colormap   = :bluesreds,
       colorrange = nothing,
+      fieldstyle = :nodes,
 
-      # Otherwise, 2D plots don't use custom default colors.
+      # Otherwise, 2D plots don't use custom default colors:
       cycle      = nothing,
-      fieldstyle = :nodes
+
+      # Force no shading:
+      shading    = false
     )
 end
   
@@ -23,7 +28,9 @@ function Makie.plot!(plot::Faces{<:Tuple{Grid}})
   Dc = num_cell_dims(grid)
 
   # Dispatch edges according to cell dimension Dc:
-  if Dc == 1
+  if Dc == 0
+    plot_Ngon_vertices!(plot, grid)
+  elseif Dc == 1
     plot_Ngon_edges!(plot, grid)
   else
     plot_Ngon_faces!(plot, grid)
@@ -31,117 +38,85 @@ function Makie.plot!(plot::Faces{<:Tuple{Grid}})
 
 end
 
-# Mesh and Heatmap for Ngons:
+# 2D plots:
 function plot_Ngon_faces!(plot::Faces{<:Tuple{Grid}}, grid::Grid)
 
   # Retrieve plot attributes:
-  fieldstyle = plot[:fieldstyle][]
-  color      = plot[:color][]
-  colormap   = plot[:colormap][]
+  fieldstyle    = plot[:fieldstyle][]
+  color         = plot[:color][]
 
-  # Represent a field:
+  grid_ = grid |> to_plot_mesh
   if color isa AbstractVector
     if plot[:colorrange][] === nothing
       plot[:colorrange][] = extrema(color)
     end
-
-    # Nodal field:
-    if fieldstyle == :nodes
-      Makie.mesh!(plot, grid, 
-        color      = color,
-        colormap   = colormap,
-        colorrange = plot[:colorrange][]
-        )
-
-    # Cell field:
-    elseif fieldstyle == :cells
-      #face_cons = reshape(get_cell_node_ids(grid),num_cells(grid))
-      _grid = dimension_dispatch(grid)
-      xs, cns = get_nodes_and_ids(_grid)
-
-      # WE NEED A MAPPING FROM A 3D GRID TO ITS SURFACE FOR THE COLORS!
-
-      # Create colormap from color:
-      cmap = Makie.interpolated_getindex.(
-              Ref(Makie.to_colormap(colormap, num_cells(_grid))),
-              Float64.(color),
-              Ref(plot[:colorrange][])
-              )
-      #for (ctr,face) in enumerate(face_cons)
-      for (ctr,face) in enumerate(cns)
-        #for i in 1:length(face)-2
-         # triangle = face[i:i+2]
-          #Makie.mesh!(plot, xs[triangle],
-          Makie.mesh!(plot, xs[face],
-            color      = cmap[ctr],
-            colormap   = colormap,
-            colorrange = plot[:colorrange][]
-            )
-        #end
-      end
-    else
-      error("Invalid field to plot")
+    if length(color) != GeometryBasics.coordinates(grid_) |> length
+      color = if fieldstyle == :nodes
+                to_dg_node_values(grid, color)
+              elseif fieldstyle == :cells
+                to_dg_cell_values(grid, color)
+              else
+                error("Invalid field to plot")
+              end
     end
-  
-  # Plot the mesh with a single color:
-  else
-    Makie.mesh!(plot, grid, 
-      color = color
-      )
   end
-
+  Makie.mesh!(plot, grid_; 
+    color       = color,                colormap      = plot[:colormap][],      colorrange   = plot[:colorrange][],
+    ambient     = plot[:ambient][],     diffuse       = plot[:diffuse][],       inspectable  = plot[:inspectable][],
+    interpolate = plot[:interpolate][], lightposition = plot[:lightposition][], nan_color    = plot[:nan_color][],
+    overdraw    = plot[:overdraw][],    shading       = plot[:shading][],       shininess    = plot[:shininess][],
+    specular    = plot[:specular][],    ssao          = plot[:ssao][],          transparency = plot[:transparency][], 
+    visible     = plot[:visible][]
+  )
 end
 
-# Wireframe for Ngons:
+# 1D plots:
 function plot_Ngon_edges!(plot::Faces{<:Tuple{Grid}}, grid::Grid)
 
-  # Retrieve plot attributes:
-  linewidth  = plot[:linewidth][]
+  # Retrieve color attribute:
   color      = plot[:color][]
-  colormap   = plot[:colormap][]
-
-  # Grid transformation:
-  xs, cns = get_nodes_and_ids(grid)
-  ls = GeometryBasics.Point{eltype(xs) |> length, 
-                            eltype(xs) |> eltype}[]
-
-  # Color attributes:
-  colortype = eltype(color)
-  colors = colortype[]
 
   if color isa AbstractVector
     if plot[:colorrange][] === nothing
       plot[:colorrange][] = extrema(color)
     end
-    # Draw every segment and assign a color separately:
-    for edge in cns 
-      push!(ls,
-          xs[edge[1]], xs[edge[2]]
-      )
-      push!(colors,
-          color[edge[1]], color[edge[2]]
-      )
-    end
-
-  else 
-    # Single color:
-
-    for edge in cns
-      push!(ls,
-          xs[edge[1]], xs[edge[2]]
-      )
-
-      #Concatenate colors to avoid empty corners:
-      push!(colors,
-          color, color
-      )
+    color = if length(color) == num_nodes(grid)
+              to_dg_node_values(grid, color)
+            else 
+              to_dg_cell_values(grid, color)
     end
   end
+  Makie.linesegments!(plot, grid |> to_plot_mesh;
+    color     = color,                colormap      = plot[:colormap][],      colorrange   = plot[:colorrange][],
+    ambient   = plot[:ambient][],     diffuse       = plot[:diffuse][],       inspectable  = plot[:inspectable][],
+    linewidth = plot[:linewidth][],   lightposition = plot[:lightposition][], nan_color    = plot[:nan_color][],
+    overdraw  = plot[:overdraw][],    linestyle     = plot[:linestyle][],     shininess    = plot[:shininess][],
+    specular  = plot[:specular][],    ssao          = plot[:ssao][],          transparency = plot[:transparency][], 
+    visible   = plot[:visible][]
+  )
+end
 
-  Makie.linesegments!(plot, ls, 
-    color      = colors, 
-    linewidth  = linewidth, 
-    colormap   = colormap, 
-    colorrange = plot[:colorrange][]
-    )
+# 0D plots:
+function plot_Ngon_vertices!(plot::Faces{<:Tuple{Grid}}, grid::Grid)
+
+  # Retrieve color attribute:
+  color      = plot[:color][]
+
+  if color isa AbstractVector
+    if plot[:colorrange][] === nothing
+      plot[:colorrange][] = extrema(color)
+    end
+    color = to_dg_node_values(grid, color)
+  end
+  Makie.scatter!(plot, grid |> to_plot_mesh;
+    color         = color,                  colormap         = plot[:colormap][],         colorrange      = plot[:colorrange][],
+    ambient       = plot[:ambient][],       diffuse          = plot[:diffuse][],          inspectable     = plot[:inspectable][],
+    distancefield = plot[:distancefield][], glowcolor        = plot[:glowcolor][],        glowwidth       = plot[:glowwidth][],
+    linewidth     = plot[:linewidth][],     lightposition    = plot[:lightposition][],    nan_color       = plot[:nan_color][],
+    marker        = plot[:marker][],        marker_offset    = plot[:marker_offset][],    markersize      = plot[:markersize][],
+    overdraw      = plot[:overdraw][],      makerspace       = plot[:markerspace][],      shininess       = plot[:shininess][],
+    specular      = plot[:specular][],      ssao             = plot[:ssao][],             transparency    = plot[:transparency][], 
+    visible       = plot[:visible][],       rotations        = plot[:rotations][],        strokecolor     = plot[:strokecolor][],
+    strokewidth   = plot[:strokewidth][],   transform_marker = plot[:transform_marker][], uv_offset_width = plot[:uv_offset_width][]
+  )
 end

@@ -15,4 +15,6 @@ include("faces.jl")
 
 include("edges.jl")
 
+include("vertices.jl")
+
 end #module
