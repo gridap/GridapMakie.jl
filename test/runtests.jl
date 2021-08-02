@@ -11,7 +11,7 @@ using Gridap.ReferenceFEs
 import FileIO
 
 model_2D = CartesianDiscreteModel((0,1,0,1),(5,5)) |> simplexify
-model_3D = CartesianDiscreteModel((0,1,0,1,0,1),(2,2,2)) |> simplexify
+model_3D = CartesianDiscreteModel((0,1,0,1,0,1),(5,5,5)) |> simplexify
 quad_model_2D = CartesianDiscreteModel((0.,1.5,0.,1.),(15,10))
 quad_model_3D = CartesianDiscreteModel((0.,1.5,0.,1.,0.,2.),(5,5,5))
 
@@ -24,8 +24,8 @@ celldata_2D = rand(num_cells(grid_2D))
 nodaldata_2D = rand(num_nodes(grid_2D))
 quad_nodaldata_2D = rand(num_nodes(quad_grid_2D))
 quad_celldata_2D = rand(num_cells(quad_grid_2D))
-celldata_3D = rand(num_cells(grid_3D))
-nodaldata_3D = rand(num_nodes(grid_3D))
+celldata_3D = rand(num_faces(model_3D,2))
+nodaldata_3D = rand(num_faces(model_3D,0))
 quad_nodaldata_3D = rand(num_nodes(quad_grid_3D))
 quad_celldata_3D = rand(num_cells(quad_grid_3D))
 
@@ -45,28 +45,28 @@ end
 
 @testset "GridapMakieTests" begin
     @test savefig("Fig1") do
-        fig, ax = faces(grid_3D, color=:lightseagreen)
-        edges!(ax, grid_3D)
-        vertices!(ax, grid_3D, color=:red)
+        fig, ax = faces(grid_2D, color=rand(150))
+        edges!(ax, grid_2D)
+        vertices!(ax, grid_2D, color=:red)
         fig
     end
     @test savefig("Fig2") do
-        fig = faces(grid_3D, color=celldata_3D, fieldstyle=:cells)
+        fig = faces(grid_2D, color=celldata_2D, fieldstyle=:cells)
         fig
     end
     @test savefig("Fig3") do
-        fig, ax, plt = faces(grid_2D, color=nodaldata_2D, colormap=:heat, colorrange=(0,1), shading=true)
+        fig, ax, plt = faces(grid_2D, color=nodaldata_2D, colormap=:heat)
         edges!(ax, grid_2D, color=:black)
-        Colorbar(fig[1,2], plt, ticks=0:0.25:1)
         fig
     end
     @test savefig("Fig4") do
-        fig, ax, plt = edges(grid_3D, color=nodaldata_3D, colorrange=(0,1))
+        fig, ax, plt = faces(grid_2D, color=nodaldata_2D)
+        edges!(grid_2D, color=:black)
         Colorbar(fig[1,2], plt, ticks=0:0.25:1)
         fig
     end
     @test savefig("Fig5") do
-        fig, ax, plt = edges(grid_3D, color=rand(num_faces(model_3D,1)), colorrange=(0,1), colormap=:Spectral)
+        fig, ax, plt = edges(grid_2D, color=rand(num_faces(model_2D,1)), colorrange=(0,1), colormap=:Spectral)
         Colorbar(fig[1,2], plt, ticks=0:0.25:1)
         fig
     end

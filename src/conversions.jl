@@ -11,8 +11,9 @@ function to_plot_mesh(grid::CartesianGrid)
 end
 
 function to_plot_mesh(grid::UnstructuredGrid)
-  if num_cell_dims(grid) == 3
-    to_boundary_grid(grid) |> to_simplex_grid |> to_dg_mesh |> GeometryBasics.normal_mesh
+  if num_cell_dims(grid) == 2
+    #to_boundary_grid(grid) |> to_simplex_grid |> to_dg_mesh |> GeometryBasics.normal_mesh
+    to_simplex_grid(grid) |> to_dg_mesh |> GeometryBasics.normal_mesh
   else
     to_simplex_grid(grid) |> to_dg_mesh
   end
@@ -26,6 +27,12 @@ end
 
 function to_point(x::VectorValue{D,T}) where {D,T}
   GeometryBasics.Point{D,T}(Tuple(x))
+end
+
+function to_dg_points(grid::UnstructuredGrid)
+  node_x = get_node_coordinates(grid)
+  coords = to_dg_node_values(grid, node_x)
+  [to_point(x) for x in coords]
 end
 
 function to_dg_mesh(grid::Grid)
@@ -48,13 +55,6 @@ function to_dg_mesh(grid::UnstructuredGrid)
   end
   fs = lazy_map(GeometryBasics.NgonFace{Dc+1,Tc}, cns) |> collect
   GeometryBasics.connect(ps, fs) |> GeometryBasics.Mesh
-end
-
-function to_dg_points(grid::UnstructuredGrid)
-  node_x = get_node_coordinates(grid)
-  coords = to_dg_node_values(grid, node_x)
-  ps = [to_point(x) for x in coords]
-  ps
 end
 
 function to_dg_node_values(grid::Grid, node_value::Vector)
@@ -103,7 +103,20 @@ function to_dg_cell_values(grid::Grid, cell_value::Vector)
   values
 end
 
-# Obtain boundary faces:
+# Obtain edge and vertex skeletons:
+
+function to_lowdim_grid(grid::Grid, ::Val{D}) where D
+  topo = GridTopology(grid)
+  labels = FaceLabeling(topo)
+  model = DiscreteModel(grid, topo, labels)
+  Grid(ReferenceFE{D}, model)
+end
+
+to_face_grid(grid::Grid) = to_lowdim_grid(grid, Val(2))
+to_edge_grid(grid::Grid) = to_lowdim_grid(grid, Val(1))
+to_vertex_grid(grid::Grid) = to_lowdim_grid(grid, Val(0))
+
+#= Obtain boundary faces:
 
 function to_boundary_grid(grid::Grid)
   Df = 2
@@ -128,16 +141,4 @@ function to_boundary_grid_with_map(grid::Grid)
   bface_to_face = findall(face_to_mask)
   bface_to_cell = lazy_map(Reindex(face_to_cell), bface_to_face)
   GridPortion(face_grid, bface_to_face), bface_to_cell
-end
-
-# Obtain edge and vertex skeletons:
-
-function to_lowdim_grid(grid::Grid, ::Val{D}) where D
-  topo = GridTopology(grid)
-  labels = FaceLabeling(topo)
-  model = DiscreteModel(grid, topo, labels)
-  Grid(ReferenceFE{D}, model)
-end
-
-to_edge_grid(grid::Grid) = to_lowdim_grid(grid, Val(1))
-to_vertex_grid(grid::Grid) = to_lowdim_grid(grid, Val(0))
+end=#

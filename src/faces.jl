@@ -33,7 +33,7 @@ function Makie.plot!(plot::Faces{<:Tuple{Grid}})
   elseif Dc == 1
     plot_Ngon_edges!(plot, grid)
   else
-    plot_Ngon_faces!(plot, grid)
+    plot_Ngon_faces!(plot, grid |> to_face_grid)
   end
 
 end
@@ -45,7 +45,7 @@ function plot_Ngon_faces!(plot::Faces{<:Tuple{Grid}}, grid::Grid)
   fieldstyle    = plot[:fieldstyle][]
   color         = plot[:color][]
 
-  grid_ = grid |> to_plot_mesh
+  grid_ = to_plot_mesh(grid)
   if color isa AbstractVector
     if plot[:colorrange][] === nothing
       plot[:colorrange][] = extrema(color)
@@ -56,7 +56,7 @@ function plot_Ngon_faces!(plot::Faces{<:Tuple{Grid}}, grid::Grid)
               elseif fieldstyle == :cells
                 to_dg_cell_values(grid, color)
               else
-                error("Invalid field to plot")
+                error("Invalid fieldstyle")
               end
     end
   end
