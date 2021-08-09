@@ -1,6 +1,5 @@
 module GridapMakie
 
-using Gridap.Visualization
 using Gridap
 using Gridap.Geometry
 using Gridap.ReferenceFEs
@@ -11,10 +10,10 @@ import GeometryBasics
 
 include("conversions.jl")
 
-include("cells.jl")
+include("vertices.jl")
 
 include("edges.jl")
 
-include("vertices.jl")
+include("cells.jl")
 
 end #module

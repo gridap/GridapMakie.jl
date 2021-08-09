@@ -1,5 +1,4 @@
 # Create recipe: 
-
 @Makie.recipe(Edges) do scene
     Makie.Attributes(;
 
