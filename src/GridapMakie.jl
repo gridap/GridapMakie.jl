@@ -11,7 +11,7 @@ import GeometryBasics
 
 include("conversions.jl")
 
-include("faces.jl")
+include("cells.jl")
 
 include("edges.jl")
 
