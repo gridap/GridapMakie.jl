@@ -106,7 +106,7 @@ end
         fig
     end
     @test savefig("Fig11") do
-        fig = plot(Ω)
+        fig = plot(Ω, uh)
         fig
     end
     @test savefig("Fig12") do
