@@ -99,16 +99,13 @@ Makie.plottype(trian::Triangulation) = Makie.Mesh
 end
 
 function Makie.plot!(p::MeshField)
-  # TODO this is not reactive
-  trian = p[:trian][]
-  uh = p[:uh][]
-  vds = visualization_data(
-    trian,"",cellfields=[""=>uh])
-  grid = first(vds).grid
-  nodaldata = first(first(vds).nodaldata)[2]
-  scalarnodaldata = map(to_scalar,nodaldata)
+  trian = p[:trian]
+  uh = p[:uh]
+  grid_and_data = Makie.lift(to_grid,trian,uh)
+  pg = Makie.lift(i->PlotGrid(i[1]),grid_and_data)
+  scalarnodaldata = Makie.lift(i->i[2],grid_and_data)
   #TODO delegate more attributes
-  Makie.mesh!(p,PlotGrid(grid);
+  Makie.mesh!(p,pg;
     color=scalarnodaldata,
     shading=p[:shading],
     linewidth=p[:linewidth],

@@ -128,7 +128,7 @@ function to_lowdim_grid(grid::Grid, ::Val{D}) where D
 end
 to_lowdim_grid(grid::Grid{D}, ::Val{D}) where D = grid
 
-to_cell_grid(grid::Grid)   = to_lowdim_grid(grid, Val(2))
+to_face_grid(grid::Grid)   = to_lowdim_grid(grid, Val(2))
 to_edge_grid(grid::Grid)   = to_lowdim_grid(grid, Val(1))
 to_vertex_grid(grid::Grid) = to_lowdim_grid(grid, Val(0))
 
