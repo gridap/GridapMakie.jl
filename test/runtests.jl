@@ -29,25 +29,29 @@ end
 
 model = CartesianDiscreteModel((0,1,0,2),(5,5)) |> simplexify
 
-#grid = get_grid(model)
-##grid = Grid(ReferenceFE{1},model)
-##grid = Grid(ReferenceFE{0},model)
-#celldata = rand(num_cells(grid))
-#nodaldata = rand(num_nodes(grid))
-#fig,ax,sc = mesh(PlotGrid(grid),color=nodaldata,shading=false)
-#wireframe!(PlotGrid(grid),color=:black,linewidth=3)
-#scatter!(PlotGrid(grid),color=:red)
-#display(fig)
+grid = get_grid(model)
+#grid = Grid(ReferenceFE{1},model)
+#grid = Grid(ReferenceFE{0},model)
+celldata = rand(num_cells(grid))
+nodaldata = rand(num_nodes(grid))
+fig,ax,sc = mesh(PlotGrid(grid),color=nodaldata,shading=false)
+wireframe!(PlotGrid(grid),color=:black,linewidth=3)
+scatter!(PlotGrid(grid),color=:red)
+display(fig)
 
 Ω = Triangulation(model)
 Γ = BoundaryTriangulation(model)
-fig,ax,sc = mesh(Ω)
-#scatter!(Ω)
-mesh!(Γ,color=:red)
+fig,ax,sc = plot(Ω,x->x[1]*x[2],shading=false)
+wireframe!(Ω,color=:white)
+scatter!(Ω,color=:green)
+plot!(Γ,x->x[2]+x[1],linewidth=8)
 display(fig)
 
 
-
+#uh = CellField(x->x[1]*x[2],Ω)
+#Λ = SkeletonTriangulation(model)
+#fig, = plot(Λ,mean(uh))
+#display(fig)
 
 
 

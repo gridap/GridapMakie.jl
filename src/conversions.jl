@@ -10,6 +10,7 @@ function to_plot_mesh(grid::CartesianGrid)
   simplexify(grid) |> to_plot_mesh
 end
 
+# rename to to_plot_dg_mesh
 function to_plot_mesh(grid::UnstructuredGrid)
   if num_cell_dims(grid) == 2
     #to_boundary_grid(grid) |> to_simplex_grid |> to_dg_mesh |> GeometryBasics.normal_mesh
@@ -18,6 +19,18 @@ function to_plot_mesh(grid::UnstructuredGrid)
     to_simplex_grid(grid) |> to_dg_mesh
   end
 end
+
+#function to_plot_mesh(grid::UnstructuredGrid)
+#  if num_cell_dims(grid) == 2
+#    #to_boundary_grid(grid) |> to_simplex_grid |> to_dg_mesh |> GeometryBasics.normal_mesh
+#    to_simplex_grid(grid) |> to_mesh |> GeometryBasics.normal_mesh
+#  else
+#    to_simplex_grid(grid) |> to_mesh
+#  end
+#end
+#
+# function to_mesh(grid::UnstructuredGrid)
+# end
 
 function to_simplex_grid(grid)
   reffes = get_reffes(grid)
@@ -116,6 +129,8 @@ to_lowdim_grid(grid::Grid{D}, ::Val{D}) where D = grid
 to_face_grid(grid::Grid) = to_lowdim_grid(grid, Val(2))
 to_edge_grid(grid::Grid) = to_lowdim_grid(grid, Val(1))
 to_vertex_grid(grid::Grid) = to_lowdim_grid(grid, Val(0))
+
+to_scalar(a) = norm(a)
 
 #= Obtain boundary faces:
 
