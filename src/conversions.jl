@@ -2,6 +2,13 @@
 #Makie.convert_arguments(::Type{<:Makie.Wireframe}, grid::Grid) = ( grid |> to_plot_mesh, )
 #Makie.convert_arguments(::Makie.PlotFunc, grid::Grid) = ( grid |> to_plot_mesh, )
 
+# Overload plot from Makie for Triangulation and CellField types:
+Makie.plottype(::Union{Triangulation, CellField}) = Cells{<:Tuple{Union{Triangulation, CellField}}}
+Makie.plottype(::Triangulation, ::CellField) = Cells{<:Tuple{Triangulation, CellField}}
+Makie.plottype(::Union{BoundaryTriangulation, SkeletonTriangulation}) = Edges{<:Tuple{Union{BoundaryTriangulation, SkeletonTriangulation}}}
+Makie.plottype(::BoundaryTriangulation, ::CellField) = Edges{<:Tuple{BoundaryTriangulation, CellField}}
+Makie.plottype(::SkeletonTriangulation, ::CellField) = Edges{<:Tuple{SkeletonTriangulation, CellField}}
+
 function to_plot_mesh(grid::Grid)
   UnstructuredGrid(grid) |> to_plot_mesh
 end
@@ -10,7 +17,7 @@ function to_plot_mesh(grid::CartesianGrid)
   simplexify(grid) |> to_plot_mesh
 end
 
-# rename to to_plot_dg_mesh
+# TODO rename to to_plot_dg_mesh
 function to_plot_mesh(grid::UnstructuredGrid)
   if num_cell_dims(grid) == 2
     #to_boundary_grid(grid) |> to_simplex_grid |> to_dg_mesh |> GeometryBasics.normal_mesh
@@ -46,10 +53,6 @@ function to_dg_points(grid::UnstructuredGrid)
   node_x = get_node_coordinates(grid)
   coords = to_dg_node_values(grid, node_x)
   [to_point(x) for x in coords]
-end
-
-function to_dg_mesh(grid::Grid)
-  UnstructuredGrid(grid) |> to_dg_mesh
 end
 
 function to_dg_mesh(grid::UnstructuredGrid)
@@ -117,7 +120,6 @@ function to_dg_cell_values(grid::Grid, cell_value::Vector)
 end
 
 # Obtain edge and vertex skeletons:
-
 function to_lowdim_grid(grid::Grid, ::Val{D}) where D
   topo = GridTopology(grid)
   labels = FaceLabeling(topo)
@@ -126,11 +128,26 @@ function to_lowdim_grid(grid::Grid, ::Val{D}) where D
 end
 to_lowdim_grid(grid::Grid{D}, ::Val{D}) where D = grid
 
-to_face_grid(grid::Grid) = to_lowdim_grid(grid, Val(2))
-to_edge_grid(grid::Grid) = to_lowdim_grid(grid, Val(1))
+to_cell_grid(grid::Grid)   = to_lowdim_grid(grid, Val(2))
+to_edge_grid(grid::Grid)   = to_lowdim_grid(grid, Val(1))
 to_vertex_grid(grid::Grid) = to_lowdim_grid(grid, Val(0))
 
 to_scalar(a) = norm(a)
+
+function to_grid(Ω::Triangulation)
+  vds = visualization_data(Ω,"")
+  first(vds).grid
+end
+
+function to_grid(Ω::Triangulation, uh)
+  vds = visualization_data(Ω,"",cellfields=[""=>uh])
+  grid = first(vds).grid
+  nodaldata = first(first(vds).nodaldata)[2]
+  scalarnodaldata = map(to_scalar,nodaldata)
+  grid, scalarnodaldata
+end
+
+to_scalar(x) = norm(x)
 
 #= Obtain boundary faces:
 

@@ -1,6 +1,6 @@
 # Create recipe: 
 
-@Makie.recipe(Vertices, grid) do scene
+@Makie.recipe(Vertices) do scene
     Makie.Attributes(;
 
       # Use default theme:
@@ -9,26 +9,19 @@
       # Custom arguments:
       color      = :black,
       colormap   = :hawaii,
-      colorrange = nothing 
+      colorrange = nothing,
+
+      # Allow to plot custom color:
+      cycle      = nothing
     )
 end
   
   # Plot! especialization:
   
 function Makie.plot!(plot::Vertices{<:Tuple{Grid}})
-  
-  # Retrieve plot arguments:
-  grid      = plot[:grid][]
-  color     = plot[:color][]
-
-  if color isa AbstractVector
-    if plot[:colorrange][] === nothing
-      plot[:colorrange][] = extrema(color)
-    end
-  end
-  
-  faces!(plot, grid |> to_vertex_grid;
-    color         = color,                  colormap         = plot[:colormap][],         colorrange      = plot[:colorrange][],
+  grid = plot[1][]
+  cells!(plot, grid |> to_vertex_grid;
+    color         = plot[:color][],         colormap         = plot[:colormap][],         colorrange      = plot[:colorrange][],
     ambient       = plot[:ambient][],       diffuse          = plot[:diffuse][],          inspectable     = plot[:inspectable][],
     distancefield = plot[:distancefield][], glowcolor        = plot[:glowcolor][],        glowwidth       = plot[:glowwidth][],
     linewidth     = plot[:linewidth][],     lightposition    = plot[:lightposition][],    nan_color       = plot[:nan_color][],

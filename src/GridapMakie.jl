@@ -1,6 +1,5 @@
 module GridapMakie
 
-using Gridap.Visualization
 using Gridap
 using Gridap.Helpers
 using Gridap.Geometry
@@ -69,6 +68,8 @@ function Makie.convert_arguments(::Type{<:Makie.Scatter}, pg::PlotGrid)
   (x,)
 end
 
+# TODO use to_grid instead of calling visualization_data
+
 function Makie.convert_arguments(::Type{<:Makie.Mesh}, trian::Triangulation)
   vds = visualization_data(trian,"")
   grid = first(vds).grid
@@ -117,7 +118,7 @@ end
 
 Makie.plottype(trian::Triangulation,f) = MeshField
 
-#include("faces.jl")
+#include("cells.jl")
 #
 #include("edges.jl")
 #
