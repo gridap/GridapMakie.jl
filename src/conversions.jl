@@ -1,48 +1,50 @@
-#Makie.convert_arguments(::Type{<:Makie.Mesh}, grid::Grid) = ( grid |> to_plot_mesh, )
-#Makie.convert_arguments(::Type{<:Makie.Wireframe}, grid::Grid) = ( grid |> to_plot_mesh, )
-#Makie.convert_arguments(::Makie.PlotFunc, grid::Grid) = ( grid |> to_plot_mesh, )
-
-# Overload plot from Makie for Triangulation and CellField types:
-Makie.plottype(::Union{Triangulation, CellField}) = Cells{<:Tuple{Union{Triangulation, CellField}}}
-Makie.plottype(::Triangulation, ::CellField) = Cells{<:Tuple{Triangulation, CellField}}
-Makie.plottype(::Union{BoundaryTriangulation, SkeletonTriangulation}) = Edges{<:Tuple{Union{BoundaryTriangulation, SkeletonTriangulation}}}
-Makie.plottype(::BoundaryTriangulation, ::CellField) = Edges{<:Tuple{BoundaryTriangulation, CellField}}
-Makie.plottype(::SkeletonTriangulation, ::CellField) = Edges{<:Tuple{SkeletonTriangulation, CellField}}
-
-function to_plot_mesh(grid::Grid)
-  UnstructuredGrid(grid) |> to_plot_mesh
+function to_plot_dg_mesh(grid::Grid)
+  UnstructuredGrid(grid) |> to_plot_dg_mesh
 end
 
-function to_plot_mesh(grid::CartesianGrid)
-  simplexify(grid) |> to_plot_mesh
-end
-
-# TODO rename to to_plot_dg_mesh
-function to_plot_mesh(grid::UnstructuredGrid)
+function to_plot_dg_mesh(grid::UnstructuredGrid)
   if num_cell_dims(grid) == 2
-    #to_boundary_grid(grid) |> to_simplex_grid |> to_dg_mesh |> GeometryBasics.normal_mesh
     to_simplex_grid(grid) |> to_dg_mesh |> GeometryBasics.normal_mesh
   else
     to_simplex_grid(grid) |> to_dg_mesh
   end
 end
 
-#function to_plot_mesh(grid::UnstructuredGrid)
-#  if num_cell_dims(grid) == 2
-#    #to_boundary_grid(grid) |> to_simplex_grid |> to_dg_mesh |> GeometryBasics.normal_mesh
-#    to_simplex_grid(grid) |> to_mesh |> GeometryBasics.normal_mesh
-#  else
-#    to_simplex_grid(grid) |> to_mesh
-#  end
-#end
-#
-# function to_mesh(grid::UnstructuredGrid)
-# end
+function to_plot_mesh(grid::Grid)
+  UnstructuredGrid(grid) |> to_plot_mesh
+end
+
+function to_plot_mesh(grid::UnstructuredGrid)
+  if num_cell_dims(grid) == 2
+    to_simplex_grid(grid) |> to_mesh |> GeometryBasics.normal_mesh
+  else
+    to_simplex_grid(grid) |> to_mesh
+  end
+end
 
 function to_simplex_grid(grid)
   reffes = get_reffes(grid)
   polys = map(get_polytope,reffes)
   all(is_simplex,polys) ? grid : simplexify(grid)
+end
+
+function to_mesh(grid::Grid)
+  grid |> UnstructuredGrid |> to_mesh
+end
+
+function to_mesh(grid::UnstructuredGrid)
+  reffes = get_reffes(grid)
+  @assert all(reffe->get_order(reffe)==1,reffes)
+  @assert all(reffe->is_simplex(get_polytope(reffe)),reffes)
+  xs = get_node_coordinates(grid)
+  Tp = eltype(eltype(xs))
+  Dp = length(eltype(xs))
+  ps = collect(reinterpret(GeometryBasics.Point{Dp,Tp},xs))
+  cns = get_cell_node_ids(grid)
+  Tc = eltype(eltype(cns))
+  Dc = num_cell_dims(grid)
+  fs = collect(lazy_map(GeometryBasics.NgonFace{Dc+1,Tc},cns))
+  GeometryBasics.Mesh(GeometryBasics.connect(ps,fs))
 end
 
 function to_point(x::VectorValue{D,T}) where {D,T}
@@ -132,46 +134,18 @@ to_face_grid(grid::Grid)   = to_lowdim_grid(grid, Val(2))
 to_edge_grid(grid::Grid)   = to_lowdim_grid(grid, Val(1))
 to_vertex_grid(grid::Grid) = to_lowdim_grid(grid, Val(0))
 
-to_scalar(a) = norm(a)
-
-function to_grid(Ω::Triangulation)
-  vds = visualization_data(Ω,"")
+# Obtain grid and cellfield from triangulation:
+function to_grid(trian::Triangulation)
+  vds = visualization_data(trian,"")
   first(vds).grid
 end
 
-function to_grid(Ω::Triangulation, uh)
-  vds = visualization_data(Ω,"",cellfields=[""=>uh])
+function to_grid(trian::Triangulation, uh)
+  vds = visualization_data(trian, "", cellfields=[""=>uh])
   grid = first(vds).grid
   nodaldata = first(first(vds).nodaldata)[2]
-  scalarnodaldata = map(to_scalar,nodaldata)
+  scalarnodaldata = map(to_scalar, nodaldata)
   grid, scalarnodaldata
 end
 
 to_scalar(x) = norm(x)
-
-#= Obtain boundary faces:
-
-function to_boundary_grid(grid::Grid)
-  Df = 2
-  topo = GridTopology(grid)
-  labels = FaceLabeling(topo)
-  model = DiscreteModel(grid, topo, labels)
-  face_grid = Grid(ReferenceFE{Df}, model)
-  face_to_mask = get_face_mask(labels, "boundary", Df)
-  GridPortion(face_grid, face_to_mask)
-end
-
-function to_boundary_grid_with_map(grid::Grid)
-  Df = 2
-  Dc = 3
-  topo = GridTopology(grid)
-  labels = FaceLabeling(topo)
-  model = DiscreteModel(grid, topo, labels)
-  face_grid = Grid(ReferenceFE{Df}, model)
-  face_to_mask = get_face_mask(labels, "boundary", Df)
-  face_to_cells = get_faces(topo, Df, Dc)
-  face_to_cell = lazy_map(first, face_to_cells)
-  bface_to_face = findall(face_to_mask)
-  bface_to_cell = lazy_map(Reindex(face_to_cell), bface_to_face)
-  GridPortion(face_grid, bface_to_face), bface_to_cell
-end=#
