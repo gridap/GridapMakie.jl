@@ -16,29 +16,46 @@ function setup_color(color::AbstractArray, grid::Grid)
             end
 end
 
+function setup_colorrange(color)
+  Makie.Automatic()
+end
+
+function setup_colorrange(color::AbstractArray)
+  extrema(color)
+end
+
 function Makie.plot!(plot::Makie.Mesh{<:Tuple{PlotGrid}})
     grid = Makie.lift(get_grid, plot[1])
     color = Makie.lift(setup_color, plot[:color], grid)
+    crange = Makie.lift(setup_colorrange,color)
     D = num_cell_dims(grid[])
 
     if D in (2,3)
         mesh = Makie.lift(g->g|>to_face_grid|>to_plot_dg_mesh, grid)
         Makie.mesh!(plot, mesh;
-            plot.attributes.attributes..., color = color
+            plot.attributes.attributes...,
+            color = color,
+            colorrange = crange,
         )
     elseif D == 1
         mesh = Makie.lift(to_plot_dg_mesh, grid)
         Makie.linesegments!(plot, mesh;
-            plot.attributes.attributes..., color = color
+            plot.attributes.attributes...,
+            color = color,
+            colorrange = crange,
         )
     elseif D == 0
         mesh = Makie.lift(to_plot_dg_mesh, grid)
         Makie.scatter!(plot, mesh;
-            plot.attributes.attributes..., color = color
+            plot.attributes.attributes...,
+            color = color,
+            colorrange = crange,
         )
     else
         @unreachable
     end
+    plot[:colorrange] = crange
+    plot
 end
 
 function Makie.convert_arguments(::Type{<:Makie.Wireframe}, pg::PlotGrid)
@@ -94,14 +111,16 @@ function Makie.plot!(p::MeshField{<:Tuple{CellField}})
     grid_and_data = Makie.lift(to_grid, trian, uh)
     pg = Makie.lift(i->PlotGrid(i[1]), grid_and_data)
     scalarnodaldata = Makie.lift(i->i[2], grid_and_data)
+    crange = Makie.lift(setup_colorrange,scalarnodaldata)
     
     Makie.mesh!(p, pg;
-        p.attributes.attributes..., color = scalarnodaldata
+        p.attributes.attributes...,
+        color = scalarnodaldata,
+        colorrange = crange,
     )
+    p[:colorrange] = crange
+    p
 end
 
 Makie.plottype(::CellField) = MeshField
 
-with_theme(mesh_theme) do
-    mesh(grid_2D)
-end

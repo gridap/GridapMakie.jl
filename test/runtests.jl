@@ -36,7 +36,12 @@ model = CartesianDiscreteModel(domain,cell_nums) |> simplexify
 Ω = Triangulation(model)
 Γ = BoundaryTriangulation(model)
 Λ = SkeletonTriangulation(model)
+n_Λ = get_normal_vector(Λ)
+u(x) = sin(π*(x[1]+x[2]))
 uh = CellField(x->sin(π*(x[1]+x[2])),Ω)
+#reffe = ReferenceFE(lagrangian,Float64,1)
+#V = FESpace(model,reffe)
+#uh = interpolate(u,V)
 celldata = rand(num_cells(Ω))
 
 const OUTDIR = joinpath(@__DIR__, "output")
@@ -55,13 +60,14 @@ end
 
 @testset "GridapMakieTests" begin
     @test savefig("Fig1") do
-        fig = plot(grid_2D)
+        fig = plot(grid_2D,color=:pink)
         wireframe!(grid_2D)
         scatter!(grid_2D)
         fig
     end
     @test savefig("Fig11") do
         fig = plot(Ω, uh)
+        plot!(Γ, uh,linewidth=4)
         fig
     end
     @test savefig("Fig12") do
@@ -70,17 +76,17 @@ end
         fig
     end
     @test savefig("Fig13") do
-        fig, _ , plt = plot(Ω, color=celldata, colormap=:heat, colorrange=(0,1))
+      fig, _ , plt = plot(Ω, color=3*celldata, colormap=:heat)
         Colorbar(fig[1,2], plt)
         fig
     end
     @test savefig("Fig14") do
-        fig = plot(Γ, uh)
-        plot!(Λ, uh)
+      fig,_,plt = plot(Λ, jump(n_Λ⋅∇(uh)),linewidth=4, colorrange=(0,1))
+        Colorbar(fig[1,2],plt)
         fig
     end
     @test savefig("fig15") do 
-        fig, _ , plt = plot(uh, colormap=:Spectral, colorrange=(0,1.))
+      fig, _ , plt = plot(uh, colormap=:Spectral)#, colorrange=(0,1.))
         Colorbar(fig[1,2], plt)
         fig   
     end
