@@ -66,8 +66,13 @@ end
         fig
     end
     @test savefig("Fig11") do
-        fig = plot(Ω, uh)
-        plot!(Γ, uh,linewidth=4)
+        fig,_,sc = plot(Ω, uh,colorrange=(0,1))
+        Colorbar(fig[1,2],sc)
+        fig
+    end
+    @test savefig("Fig111") do
+        fig,_,sc = plot(Γ, uh,colormap=:algae,linewidth=10,colorrange=(0,1))
+        Colorbar(fig[1,2],sc)
         fig
     end
     @test savefig("Fig12") do
@@ -86,7 +91,7 @@ end
         fig
     end
     @test savefig("fig15") do 
-      fig, _ , plt = plot(uh, colormap=:Spectral)#, colorrange=(0,1.))
+      fig, _ , plt = plot(uh, colormap=:Spectral, colorrange=(0,1))
         Colorbar(fig[1,2], plt)
         fig   
     end

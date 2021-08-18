@@ -3,11 +3,7 @@ function to_plot_dg_mesh(grid::Grid)
 end
 
 function to_plot_dg_mesh(grid::UnstructuredGrid)
-  if num_cell_dims(grid) == 2
     to_simplex_grid(grid) |> to_dg_mesh |> GeometryBasics.normal_mesh
-  else
-    to_simplex_grid(grid) |> to_dg_mesh
-  end
 end
 
 function to_plot_mesh(grid::Grid)
@@ -15,11 +11,7 @@ function to_plot_mesh(grid::Grid)
 end
 
 function to_plot_mesh(grid::UnstructuredGrid)
-  if num_cell_dims(grid) == 2
     to_simplex_grid(grid) |> to_mesh |> GeometryBasics.normal_mesh
-  else
-    to_simplex_grid(grid) |> to_mesh
-  end
 end
 
 function to_simplex_grid(grid)
