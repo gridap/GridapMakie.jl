@@ -3,6 +3,10 @@ function to_plot_dg_mesh(grid::Grid)
 end
 
 function to_plot_dg_mesh(grid::UnstructuredGrid)
+    to_simplex_grid(grid) |> to_dg_mesh
+end
+
+function to_plot_dg_mesh(grid::UnstructuredGrid{2,3})
     to_simplex_grid(grid) |> to_dg_mesh |> GeometryBasics.normal_mesh
 end
 
@@ -11,6 +15,10 @@ function to_plot_mesh(grid::Grid)
 end
 
 function to_plot_mesh(grid::UnstructuredGrid)
+    to_simplex_grid(grid) |> to_mesh
+end
+
+function to_plot_mesh(grid::UnstructuredGrid{2,3})
     to_simplex_grid(grid) |> to_mesh |> GeometryBasics.normal_mesh
 end
 
