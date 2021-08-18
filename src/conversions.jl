@@ -126,18 +126,40 @@ to_face_grid(grid::Grid)   = to_lowdim_grid(grid, Val(2))
 to_edge_grid(grid::Grid)   = to_lowdim_grid(grid, Val(1))
 to_vertex_grid(grid::Grid) = to_lowdim_grid(grid, Val(0))
 
-function to_lowdim_grid_with_map(grid::Grid, ::Val{D}) where D
+function to_face_grid_with_map(grid::Grid)
+  function _fixnodeids!(face_to_nodes,face_to_m,face_to_n)
+    for face in 1:length(face_to_nodes)
+      m = face_to_m[face]
+      n = face_to_n[face]
+      p = face_to_nodes.ptrs[face]
+      if m⋅n < 0
+        a = face_to_nodes.data[p]
+        face_to_nodes.data[p] = face_to_nodes.data[p+1]
+        face_to_nodes.data[p+1] = a
+      end
+    end
+  end
+  D = 2
   topo = GridTopology(grid)
   labels = FaceLabeling(topo)
   model = DiscreteModel(grid, topo, labels)
-  g = Grid(ReferenceFE{D}, model)
+  nfaces = num_faces(model,D)
+  Γ = BoundaryTriangulation(model,IdentityVector(nfaces))
+  n_Γ = get_normal_vector(Γ)
+  x_Γ = CellPoint(Fill(VectorValue(0.0,0.0),nfaces),Γ,ReferenceDomain())
+  face_to_n = collect(n_Γ(x_Γ))
+  face_to_ϕ = get_cell_map(Γ)
+  face_to_Jt = lazy_map(∇,face_to_ϕ)
+  Jt = GenericCellField(face_to_Jt,Γ,ReferenceDomain())
+  m_Γ = Operation(a->VectorValue(a[1],a[3],a[5])×VectorValue(a[2],a[4],a[6]))(Jt)
+  face_to_m = collect(m_Γ(x_Γ))
+  g = UnstructuredGrid(Grid(ReferenceFE{D}, model))
+  face_to_nodes = get_cell_node_ids(g)
+  _fixnodeids!(face_to_nodes,face_to_m,face_to_n)
   face_to_cells = get_faces(topo,D,num_cell_dims(grid))
-  nfaces = length(face_to_cells)
   face_to_cell = lazy_map(getindex,face_to_cells,Fill(1,nfaces))
   g,face_to_cell
 end
-
-to_face_grid_with_map(grid::Grid) = to_lowdim_grid_with_map(grid, Val(2))
 
 # Obtain grid and cellfield from triangulation:
 function to_grid(trian::Triangulation)
