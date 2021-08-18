@@ -16,25 +16,46 @@ function setup_color(color::AbstractArray, grid::Grid)
             end
 end
 
+setup_face_color(color::Union{Symbol, Makie.Colorant}, ::Grid,face_to_cell) = color
+
+function setup_face_color(color::AbstractArray, grid::Grid,face_to_cell)
+  color = if length(color) == num_nodes(grid)
+    color
+  elseif length(color) == num_cells(grid)
+    color[face_to_cell]
+  else
+    @unreachable
+  end
+end
+
 function Makie.plot!(plot::Makie.Mesh{<:Tuple{PlotGrid}})
     grid = Makie.lift(get_grid, plot[1])
-    color = Makie.lift(setup_color, plot[:color], grid)
     D = num_cell_dims(grid[])
+    if D in (0,1,2)
+      color = Makie.lift(setup_color, plot[:color], grid)
+      mesh = Makie.lift(to_plot_dg_mesh, grid)
+    elseif D == 3
+      face_grid_and_map = Makie.lift(to_face_grid_with_map,grid)
+      face_grid = Makie.lift(first,face_grid_and_map)
+      face_to_cell = Makie.lift(i->i[2],face_grid_and_map)
+      face_color = Makie.lift(setup_face_color,plot[:color],grid,face_to_cell)
+      mesh = Makie.lift(m->m|>to_plot_dg_mesh|>GeometryBasics.normal_mesh, face_grid)
+      color = Makie.lift(setup_color, face_color, face_grid)
+    else
+      @unreachable
+    end
 
     if D in (2,3)
-        mesh = Makie.lift(g->g|>to_face_grid|>to_plot_dg_mesh, grid)
         Makie.mesh!(plot, mesh;
             plot.attributes.attributes...,
             color = color,
         )
     elseif D == 1
-        mesh = Makie.lift(to_plot_dg_mesh, grid)
         Makie.linesegments!(plot, mesh;
             plot.attributes.attributes...,
             color = color,
         )
     elseif D == 0
-        mesh = Makie.lift(to_plot_dg_mesh, grid)
         Makie.scatter!(plot, mesh;
             plot.attributes.attributes...,
             color = color,

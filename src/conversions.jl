@@ -6,20 +6,12 @@ function to_plot_dg_mesh(grid::UnstructuredGrid)
     to_simplex_grid(grid) |> to_dg_mesh
 end
 
-function to_plot_dg_mesh(grid::UnstructuredGrid{2,3})
-    to_simplex_grid(grid) |> to_dg_mesh |> GeometryBasics.normal_mesh
-end
-
 function to_plot_mesh(grid::Grid)
   UnstructuredGrid(grid) |> to_plot_mesh
 end
 
 function to_plot_mesh(grid::UnstructuredGrid)
     to_simplex_grid(grid) |> to_mesh
-end
-
-function to_plot_mesh(grid::UnstructuredGrid{2,3})
-    to_simplex_grid(grid) |> to_mesh |> GeometryBasics.normal_mesh
 end
 
 function to_simplex_grid(grid)
@@ -133,6 +125,19 @@ to_lowdim_grid(grid::Grid{D}, ::Val{D}) where D = grid
 to_face_grid(grid::Grid)   = to_lowdim_grid(grid, Val(2))
 to_edge_grid(grid::Grid)   = to_lowdim_grid(grid, Val(1))
 to_vertex_grid(grid::Grid) = to_lowdim_grid(grid, Val(0))
+
+function to_lowdim_grid_with_map(grid::Grid, ::Val{D}) where D
+  topo = GridTopology(grid)
+  labels = FaceLabeling(topo)
+  model = DiscreteModel(grid, topo, labels)
+  g = Grid(ReferenceFE{D}, model)
+  face_to_cells = get_faces(topo,D,num_cell_dims(grid))
+  nfaces = length(face_to_cells)
+  face_to_cell = lazy_map(getindex,face_to_cells,Fill(1,nfaces))
+  g,face_to_cell
+end
+
+to_face_grid_with_map(grid::Grid) = to_lowdim_grid_with_map(grid, Val(2))
 
 # Obtain grid and cellfield from triangulation:
 function to_grid(trian::Triangulation)
