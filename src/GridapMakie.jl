@@ -14,8 +14,6 @@ import GeometryBasics
 
 include("conversions.jl")
 
-include("themes.jl")
-
 include("recipes.jl")
 
 end #module
