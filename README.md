@@ -1,7 +1,3 @@
-```@meta
-EditURL = "<unknown>/README.jl"
-```
-
 ## GridapMakie
 
 [![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://gridap.github.io/GridapMakie.jl/stable)
@@ -17,7 +13,7 @@ such as Paraview. From the idea of visually inspecting data from Julia code dire
 open-source package ecosystem, [GridapMakie.jl](https://github.com/gridap/GridapMakie.jl) is born. As a part of the Google Summer of
 Code 2021 program, GridapMakie adopts [Makie.jl](https://github.com/JuliaPlots/Makie.jl) as a second visualization back-end for
 Gridap.jl simulations. This package is thought as a built-in tool to assess the user in their FE calculations with a smoother workflow
-in a higlhy intuitive API.
+in a highly intuitive API.
 
 # Installation
 
