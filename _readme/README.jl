@@ -21,65 +21,66 @@
 # to be visualized
 
 # ```julia
-# <span style="color:green"> julia> </span> ] 
-# <span style="color:green"> julia> </span> add Gridap, GridapMakie, GLMakie
+# julia> ] 
+# julia> add Gridap, GridapMakie, GLMakie
 # ```
 #
 # ## Examples
 
 # First things first, we shall be using the three packages
+
 using Gridap, GridapMakie, GLMakie
 using FileIO #!md
 
 # ### 2D Plots
 
 # Then, let us consider a simple, 2D simplexified cartesian mesh Ω
-# ```julia
+
 domain = (0, 1, 0, 1)
 cell_nums = (10, 10)
 model = CartesianDiscreteModel(domain, cell_nums) |> simplexify
 Ω = Triangulation(model)
-# ``` 
+
 
 # The visualization of Ω along with the edges of its faces and its vertices
-# ```julia
+
 fig = plot(Ω)
 wireframe!(Ω, color=:black, linewidth=2)
 scatter!(Ω, marker=:star8, markersize=20, color=:blue)
-# ```
+
 save("images/2d_Fig1.png", fig) #!md
 # ![](_readme/images/2d_Fig1.png)
 
 # We now consider the nodal field uh
-# ```julia
+
 reffe = ReferenceFE(lagrangian, Float64, 1)
 V = FESpace(model, reffe)
 uh = interpolate(x->sin(π*(x[1]+x[2])), V)
-# ```
+
 
 # and plot it over Ω, adding a colorbar
-# ```julia
+
 fig, _ , plt = plot(Ω, uh)
 Colorbar(fig[1,2], plt)
-# ```
+
 save("images/2d_Fig11.png", fig) #!md
 # ![](_readme/images/2d_Fig11.png)
 
 # On the other hand, we may as well plot a cell field
-# ```julia
+
 celldata = π*rand(num_cells(Ω)) .-1
 fig, _ , plt = plot(Ω, color=celldata, colormap=:heat)
 Colorbar(fig[2,1], plt, vertical=false)
-# ```
+
 save("images/2d_Fig13.png", fig) #!md
 # ![](_readme/images/2d_Fig13.png)
 
 # If we are only interested in the boundary of Ω
-# ```julia
+
 Γ = BoundaryTriangulation(model)
 fig, _ , plt = plot(Γ, uh, colormap=:algae, linewidth=10)
 Colorbar(fig[1,2], plt)
-# ```
+
 save("images/2d_Fig111.png", fig) #!md
 # ![](_readme/images/2d_Fig111.png)
 
@@ -87,7 +88,7 @@ save("images/2d_Fig111.png", fig) #!md
 
 # In addition to the 2D plots, GridapMakie is able to handle more complex geometries. If we
 # take the mesh from the [first Gridap tutorial](https://gridap.github.io/Tutorials/stable/pages/t001_poisson/#Tutorial-1:-Poisson-equation-1)
-# ```julia
+
 model = DiscreteModelFromFile("model.json")
 Ω = Triangulation(model)
 ∂Ω = BoundaryTriangulation(model)
@@ -99,16 +100,16 @@ save("images/3d_Fig1.png", fig) #!md
 v(x) = sin(π*(x[1]+x[2]+x[3]))
 fig, ax, plt = plot(Ω, v, shading=true)
 Colorbar(fig[1,2], plt)
-# ```
+
 save("images/3d_Fig3.png", fig) #!md
 # ![](_readme/images/3d_Fig3.png)
 
 # we can even plot FE approximations in certain subdomains, e.g.
-# ```julia
+
 Γ = BoundaryTriangulation(model, tags=["square", "triangle", "circle"])
 fig = plot(Γ, v, colormap=:rainbow, shading=true)
 wireframe!(∂Ω, linewidth=0.5, color=:gray)
-# ```
+
 save("images/3d_Fig2.png", fig) #!md
 # ![](_readme/images/3d_Fig2.png)
 
@@ -116,7 +117,7 @@ save("images/3d_Fig2.png", fig) #!md
 
 # Finally, by using Makie [Observables](https://makie.juliaplots.org/stable/interaction/nodes.html), we
 # can create animations or interactive plots. For example, if the nodal field has a time dependence
-# ```julia
+
 t = Observable(0.0)
 u = lift(t) do t
     x->sin(π*(x[1]+x[2]+x[3]))*cos(π*t)
@@ -128,5 +129,5 @@ timestamps = range(0, 2, step=1/framerate)
 record(fig, "images/animation.gif", timestamps; framerate=framerate) do this_t
     t[] = this_t
 end
-# ```
+
 # ![](_readme/images/animation.gif)
