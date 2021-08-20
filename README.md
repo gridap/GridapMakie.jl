@@ -23,12 +23,12 @@ in a highly intuitive API.
 
 # According to Makie's guidelines, it is enough to install one of its backends, e.g. GLMakie. Additionally, Gridap provides the plot objects
 # to be visualized
-#
+
 # ```julia
 # julia> ] 
 # julia> add Gridap, GridapMakie, GLMakie
 # ```
-#
+
 # ## Examples
 
 First things first, we shall be using the three packages
