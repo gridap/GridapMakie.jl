@@ -1,11 +1,11 @@
-## GridapMakie
+# GridapMakie
 
 [![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://gridap.github.io/GridapMakie.jl/stable)
 [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://gridap.github.io/GridapMakie.jl/dev)
 [![Build Status](https://travis-ci.com/gridap/GridapMakie.jl.svg?branch=master)](https://travis-ci.com/gridap/GridapMakie.jl)
 [![Coverage](https://codecov.io/gh/gridap/GridapMakie.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/gridap/GridapMakie.jl)
 
-# Overview
+## Overview
 
 The visualization of numerical results is an important part of FE computations. However, the current way of visualizing data from
 [Gridap.jl](https://github.com/gridap/Gridap.jl) computations is to write it to disk in vtu format, thus relying on external software
@@ -15,7 +15,7 @@ Code 2021 program, GridapMakie adopts [Makie.jl](https://github.com/JuliaPlots/M
 Gridap.jl simulations. This package is thought as a built-in tool to assess the user in their FE calculations with a smoother workflow
 in a highly intuitive API.
 
-# Installation
+## Installation
 
 According to Makie's guidelines, it is enough to install one of its backends, e.g. GLMakie. Additionally, Gridap provides the plot objects
 to be visualized
@@ -25,7 +25,7 @@ julia> ]
 julia> add Gridap, GridapMakie, GLMakie
 ```
 
-# Examples
+## Examples
 
 First things first, we shall be using the three packages
 
@@ -33,6 +33,7 @@ First things first, we shall be using the three packages
 using Gridap, GridapMakie, GLMakie
 ````
 
+### 2D Plots
 Then, let us consider a simple, 2D simplexified cartesian mesh Ω
 
 ````@example README
@@ -89,6 +90,7 @@ Colorbar(fig[1,2], plt)
 
 ![](_readme/images/2d_Fig111.png)
 
+### 3D Plots
 In addition to the 2D plots, GridapMakie is able to handle more complex geometries. If we
 take the mesh from the [first Gridap tutorial](https://gridap.github.io/Tutorials/stable/pages/t001_poisson/#Tutorial-1:-Poisson-equation-1)
 
@@ -120,6 +122,7 @@ wireframe!(∂Ω, linewidth=0.5, color=:gray)
 
 ![](_readme/images/3d_Fig2.png)
 
+### Animations and interactivity
 Finally, by using Makie [Observables](https://makie.juliaplots.org/stable/interaction/nodes.html), we
 can create animations or interactive plots. For example, if the nodal field has a time dependence
 
