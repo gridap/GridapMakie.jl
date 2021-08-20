@@ -40,8 +40,8 @@ model = CartesianDiscreteModel(domain, cell_nums) |> simplexify
 # The visualization of Ω along with the edges of its faces and its vertices
 fig = plot(Ω)
 wireframe!(Ω, color=:black, linewidth=2)
-scatter!(Ω, marker=:star8)
-save("2d_Fig1.png", fig) #!md
+scatter!(Ω, marker=:utriangle,markersize=20,color=:blue)
+save("images/2d_Fig1.png", fig) #!md
 # ![](_readme/images/2d_Fig1.png)
 
 # We now consider the nodal field uh
@@ -57,7 +57,7 @@ save("images/2d_Fig11.png", fig) #!md
 # On the other hand, we may as well plot a cell field
 celldata = π*rand(num_cells(Ω)) .-1
 fig, _ , plt = plot(Ω, color=celldata, colormap=:heat)
-Colorbar(fig[1,2], plt, vertical=false)
+Colorbar(fig[2,1], plt, vertical=false)
 save("images/2d_Fig13.png", fig) #!md
 # ![](_readme/images/2d_Fig13.png)
 
@@ -68,6 +68,16 @@ Colorbar(fig[1,2], plt)
 save("images/2d_Fig111.png", fig) #!md
 # ![](_readme/images/2d_Fig111.png)
 
+#t = Observable(0.0)
+#u = lift(t) do t
+#  interpolate(x -> sin(π*t)*sin(π*x[1])*cos(π*x[2]),V)
+#end
+#fig, = plot(Ω,u,colorrange=(0,1))
+#ts = range(0,2,length=90)
+#record(fig, "images/animation.gif", ts; framerate=30) do this_t
+#    t[] = this_t
+#end
+
 # In addition to the 2D plots, GridapMakie is able to handle more complex geometries. If we
 # take the mesh from the [first Gridap tutorial](https://gridap.github.io/Tutorials/stable/pages/t001_poisson/#Tutorial-1:-Poisson-equation-1)
 model = DiscreteModelFromFile("model.json")
@@ -77,20 +87,33 @@ fig = plot(Ω,shading=true)
 wireframe!(∂Ω,color=:black)
 save("images/3d_Fig1.png", fig) #!md
 # ![](_readme/images/3d_Fig1.png)
+
+v(x) = sin(π*(x[1]+x[2]+x[3]))
+fig,ax,sc = plot(Ω,v,shading=true) # add colorbar
+save("images/3d_Fig3.png", fig) #!md
+# ![](_readme/images/3d_Fig3.png)
+
 # we can even plot FE approximations in certain subdomains, e.g.
-Γ = BoundaryTriangulation(model,tags="square")
-Λ = BoundaryTriangulation(model,tags="triangle")
-Π = BoundaryTriangulation(model,tags="circle")
-V = FESpace(model, reffe)
-uh = interpolate(x->sin(4*π*(x[1]+x[2]+x[3]))*cos(2*π*(x[1]-x[2]-x[3])), V)
-vh = interpolate(x->x[1]-atan(sqrt(x[2]+x[3])), V)
-wh = interpolate(x->π+1/3*(sum(x)), V)
-shading = false
-fig = plot(Γ, uh, colormap=:rainbow, shading=shading)
-plot!(Λ, vh, colormap=:viridis, shading=shading)
-plot!(Π, wh, colormap=:matter, shading=shading)
-wireframe!(∂Ω, color=:black)
+Γ = BoundaryTriangulation(model,tags=["square","triangle","circle"])
+fig = plot(Γ, v, colormap=:rainbow, shading=true)
+wireframe!(∂Ω,linewidth=0.5,color=:gray)
 save("images/3d_Fig2.png", fig) #!md
 # ![](_readme/images/3d_Fig2.png)
+#
+
+t = Observable(0.0)
+u = lift(t) do t
+    x->sin(π*(x[1]+x[2]+x[3]))*cos(π*t)
+end
+
+fig = plot(Ω, u, colormap=:rainbow, shading=true, colorrange=(0,1))
+wireframe!(∂Ω, color=:black)
+
+framerate = 30
+timestamps = range(0, 2, step=1/framerate)
+record(fig, "image/animation.gif", timestamps; framerate=framerate) do this_t
+    t[] = this_t
+end
+
 
 # Finally, 
