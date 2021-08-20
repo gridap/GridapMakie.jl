@@ -106,7 +106,7 @@ u = lift(t) do t
     x->sin(π*(x[1]+x[2]+x[3]))*cos(π*t)
 end
 
-fig = plot(Ω, u, colormap=:rainbow, shading=true, colorrange=(0,1))
+fig = plot(Ω, u, colormap=:rainbow, shading=true, colorrange=(-1,1))
 wireframe!(∂Ω, color=:black)
 
 framerate = 30

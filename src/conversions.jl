@@ -175,4 +175,6 @@ function to_grid(trian::Triangulation, uh)
   grid, scalarnodaldata
 end
 
-to_scalar(x) = norm(x)
+to_scalar(x) = x
+to_scalar(x::VectorValue) = norm(x)
+
