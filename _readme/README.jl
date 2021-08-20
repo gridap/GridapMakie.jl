@@ -32,15 +32,15 @@ using Gridap, GridapMakie, GLMakie
 using FileIO #!md
 
 # Then, let us consider a simple, 2D simplexified cartesian mesh Ω
-domain = (0,1,0,1)
-cell_nums = (10,10)
+domain = (0, 1, 0, 1)
+cell_nums = (10, 10)
 model = CartesianDiscreteModel(domain, cell_nums) |> simplexify
 Ω = Triangulation(model)
 
 # The visualization of Ω along with the edges of its faces and its vertices
 fig = plot(Ω)
 wireframe!(Ω, color=:black, linewidth=2)
-scatter!(Ω, marker=:utriangle,markersize=20,color=:blue)
+scatter!(Ω, marker=:star8, markersize=20, color=:blue)
 save("images/2d_Fig1.png", fig) #!md
 # ![](_readme/images/2d_Fig1.png)
 
@@ -68,52 +68,40 @@ Colorbar(fig[1,2], plt)
 save("images/2d_Fig111.png", fig) #!md
 # ![](_readme/images/2d_Fig111.png)
 
-#t = Observable(0.0)
-#u = lift(t) do t
-#  interpolate(x -> sin(π*t)*sin(π*x[1])*cos(π*x[2]),V)
-#end
-#fig, = plot(Ω,u,colorrange=(0,1))
-#ts = range(0,2,length=90)
-#record(fig, "images/animation.gif", ts; framerate=30) do this_t
-#    t[] = this_t
-#end
-
 # In addition to the 2D plots, GridapMakie is able to handle more complex geometries. If we
 # take the mesh from the [first Gridap tutorial](https://gridap.github.io/Tutorials/stable/pages/t001_poisson/#Tutorial-1:-Poisson-equation-1)
 model = DiscreteModelFromFile("model.json")
 Ω = Triangulation(model)
 ∂Ω = BoundaryTriangulation(model)
-fig = plot(Ω,shading=true)
-wireframe!(∂Ω,color=:black)
+fig = plot(Ω, shading=true)
+wireframe!(∂Ω, color=:black)
 save("images/3d_Fig1.png", fig) #!md
 # ![](_readme/images/3d_Fig1.png)
 
 v(x) = sin(π*(x[1]+x[2]+x[3]))
-fig,ax,sc = plot(Ω,v,shading=true) # add colorbar
+fig, ax, plt = plot(Ω, v, shading=true)
+Colorbar(fig[1,2], plt)
 save("images/3d_Fig3.png", fig) #!md
 # ![](_readme/images/3d_Fig3.png)
 
 # we can even plot FE approximations in certain subdomains, e.g.
-Γ = BoundaryTriangulation(model,tags=["square","triangle","circle"])
+Γ = BoundaryTriangulation(model, tags=["square", "triangle", "circle"])
 fig = plot(Γ, v, colormap=:rainbow, shading=true)
-wireframe!(∂Ω,linewidth=0.5,color=:gray)
+wireframe!(∂Ω, linewidth=0.5, color=:gray)
 save("images/3d_Fig2.png", fig) #!md
 # ![](_readme/images/3d_Fig2.png)
-#
 
+# Finally, by using Makie [Observables](https://makie.juliaplots.org/stable/interaction/nodes.html), we
+# can create animations or interactive plots. For example, if the nodal field has a time dependence
 t = Observable(0.0)
 u = lift(t) do t
     x->sin(π*(x[1]+x[2]+x[3]))*cos(π*t)
 end
-
 fig = plot(Ω, u, colormap=:rainbow, shading=true, colorrange=(-1,1))
-wireframe!(∂Ω, color=:black)
-
+wireframe!(∂Ω, color=:black, linewidth=0.5)
 framerate = 30
 timestamps = range(0, 2, step=1/framerate)
-record(fig, "image/animation.gif", timestamps; framerate=framerate) do this_t
+record(fig, "images/animation.gif", timestamps; framerate=framerate) do this_t
     t[] = this_t
 end
-
-
-# Finally, 
+# ![](_readme/images/animation.gif)

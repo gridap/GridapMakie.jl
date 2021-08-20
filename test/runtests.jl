@@ -98,7 +98,7 @@ end
         fig
     end
     @test savefig("3d_Fig11") do
-        fig, _ , sc = plot(Ω, uh,colorrange=(0,1))
+        fig, _ , sc = plot(Ω, uh, colorrange=(0,1))
         Colorbar(fig[1,2],sc)
         fig
     end
