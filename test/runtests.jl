@@ -102,7 +102,7 @@ end
         Colorbar(fig[1,2],sc)
         fig
     end
-    @test_broken savefig("3d_Fig111") do
+    @test savefig("3d_Fig111") do
         fig, _ , sc = plot(Γ, uh, colormap=:algae)
         Colorbar(fig[1,2],sc)
         fig
@@ -117,7 +117,7 @@ end
         Colorbar(fig[1,2], plt)
         fig
     end
-    @test_broken savefig("3d_Fig14") do
+    @test savefig("3d_Fig14") do
         fig, _ , plt = plot(Λ, jump(n_Λ⋅∇(uh)))
         Colorbar(fig[1,2],plt)
         fig
