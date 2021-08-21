@@ -1,13 +1,9 @@
 module TestGridapMakie
 
 using GridapMakie
+using Gridap
 using GLMakie
 using Test
-using GeometryBasics
-
-using Gridap
-using Gridap.Geometry
-using Gridap.ReferenceFEs
 
 import FileIO
 

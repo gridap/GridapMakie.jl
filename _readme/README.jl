@@ -2,7 +2,7 @@
 #
 # [![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://gridap.github.io/GridapMakie.jl/stable)
 # [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://gridap.github.io/GridapMakie.jl/dev)
-# [![Build Status](https://travis-ci.com/gridap/GridapMakie.jl.svg?branch=master)](https://travis-ci.com/gridap/GridapMakie.jl)
+# [![Build Status](https://github.com/gridap/GridapMakie.jl/workflows/CI/badge.svg?branch=master)](https://github.com/gridap/GridapMakie.jl/actions)
 # [![Coverage](https://codecov.io/gh/gridap/GridapMakie.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/gridap/GridapMakie.jl)
 
 # ## Overview
@@ -28,14 +28,17 @@
 #
 # ## Examples
 
-# First things first, we shall be using the three packages
+# First things first, we shall be using the three packages as well as FileIO to save results.
+# We may as well create directories to store downloaded meshes and output files
 
 using Gridap, GridapMakie, GLMakie
-using FileIO #!md
+using FileIO
+mkdir("models")
+mkdir("images")
 
 # ### 2D Plots
 
-# Then, let us consider a simple, 2D simplexified cartesian mesh Ω
+# Then, let us consider a simple, 2D simplexified cartesian triangulation Ω
 
 domain = (0, 1, 0, 1)
 cell_nums = (10, 10)
@@ -48,8 +51,7 @@ model = CartesianDiscreteModel(domain, cell_nums) |> simplexify
 fig = plot(Ω)
 wireframe!(Ω, color=:black, linewidth=2)
 scatter!(Ω, marker=:star8, markersize=20, color=:blue)
-
-save("images/2d_Fig1.png", fig) #!md
+save("images/2d_Fig1.png", fig)
 # ![](_readme/images/2d_Fig1.png)
 
 # We now consider the nodal field uh
@@ -58,13 +60,11 @@ reffe = ReferenceFE(lagrangian, Float64, 1)
 V = FESpace(model, reffe)
 uh = interpolate(x->sin(π*(x[1]+x[2])), V)
 
-
 # and plot it over Ω, adding a colorbar
 
 fig, _ , plt = plot(Ω, uh)
 Colorbar(fig[1,2], plt)
-
-save("images/2d_Fig11.png", fig) #!md
+save("images/2d_Fig11.png", fig)
 # ![](_readme/images/2d_Fig11.png)
 
 # On the other hand, we may as well plot a cell field
@@ -72,37 +72,40 @@ save("images/2d_Fig11.png", fig) #!md
 celldata = π*rand(num_cells(Ω)) .-1
 fig, _ , plt = plot(Ω, color=celldata, colormap=:heat)
 Colorbar(fig[2,1], plt, vertical=false)
-
-save("images/2d_Fig13.png", fig) #!md
+save("images/2d_Fig13.png", fig)
 # ![](_readme/images/2d_Fig13.png)
 
-# If we are only interested in the boundary of Ω
+# If we are only interested in the boundary of Ω, namely Γ
 
 Γ = BoundaryTriangulation(model)
 fig, _ , plt = plot(Γ, uh, colormap=:algae, linewidth=10)
 Colorbar(fig[1,2], plt)
-
-save("images/2d_Fig111.png", fig) #!md
+save("images/2d_Fig111.png", fig)
 # ![](_readme/images/2d_Fig111.png)
 
 # ### 3D Plots
 
-# In addition to the 2D plots, GridapMakie is able to handle more complex geometries. If we
-# take the mesh from the [first Gridap tutorial](https://gridap.github.io/Tutorials/stable/pages/t001_poisson/#Tutorial-1:-Poisson-equation-1)
+# In addition to the 2D plots, GridapMakie is able to handle more complex geometries. For example, 
+# take the mesh from the [first Gridap tutorial](https://gridap.github.io/Tutorials/stable/pages/t001_poisson/#Tutorial-1:-Poisson-equation-1),
+# which can be downloaded using
 
-model = DiscreteModelFromFile("model.json")
+url = "https://github.com/gridap/GridapMakie.jl/raw/d5d74190e68bd310483fead8a4154235a61815c5/_readme/model.json"
+download(url,"models/model.json")
+
+# Therefore, we may as well visualize such mesh
+
+model = DiscreteModelFromFile("models/model.json")
 Ω = Triangulation(model)
 ∂Ω = BoundaryTriangulation(model)
 fig = plot(Ω, shading=true)
 wireframe!(∂Ω, color=:black)
-save("images/3d_Fig1.png", fig) #!md
+save("images/3d_Fig1.png", fig)
 # ![](_readme/images/3d_Fig1.png)
 
 v(x) = sin(π*(x[1]+x[2]+x[3]))
 fig, ax, plt = plot(Ω, v, shading=true)
 Colorbar(fig[1,2], plt)
-
-save("images/3d_Fig3.png", fig) #!md
+save("images/3d_Fig3.png", fig)
 # ![](_readme/images/3d_Fig3.png)
 
 # we can even plot FE approximations in certain subdomains, e.g.
@@ -110,8 +113,7 @@ save("images/3d_Fig3.png", fig) #!md
 Γ = BoundaryTriangulation(model, tags=["square", "triangle", "circle"])
 fig = plot(Γ, v, colormap=:rainbow, shading=true)
 wireframe!(∂Ω, linewidth=0.5, color=:gray)
-
-save("images/3d_Fig2.png", fig) #!md
+save("images/3d_Fig2.png", fig)
 # ![](_readme/images/3d_Fig2.png)
 
 # ### Animations and interactivity
@@ -130,5 +132,4 @@ timestamps = range(0, 2, step=1/framerate)
 record(fig, "images/animation.gif", timestamps; framerate=framerate) do this_t
     t[] = this_t
 end
-
 # ![](_readme/images/animation.gif)
