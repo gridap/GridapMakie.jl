@@ -7,7 +7,7 @@
 
 # ## Overview
 
-# The visualization of numerical results is an important part of FE computations. However, before the inception of GridapMakie.jl, the 
+# The visualization of numerical results is an important part of finite element (FE) computations. However, before the inception of GridapMakie.jl, the 
 # only approach available to data visualization of [Gridap.jl](https://github.com/gridap/Gridap.jl) computations was to write simulation 
 # data to data files (e.g., in vtu format) for later visualization with, e.g., Paraview or VisIt. From the idea of visually inspecting 
 # data from Julia code directly or to manipulate it with packages of the Julia 
@@ -19,16 +19,16 @@
 # ## Installation
 
 # According to Makie's guidelines, it is enough to install one of its backends, e.g. GLMakie. Additionally, Gridap provides the plot objects
-# to be visualized
+# to be visualized and `FileIO` allows to save the figures plotted. 
 
 # ```julia
 # julia> ] 
-# pkg> add Gridap, GridapMakie, GLMakie
+# pkg> add Gridap, GridapMakie, GLMakie, FileIO
 # ```
 #
 # ## Examples
 
-# First things first, we shall be using the three packages as well as FileIO to save results.
+# First things first, we shall be using the three packages as well as `FileIO`.
 # We may as well create directories to store downloaded meshes and output files
 
 using Gridap, GridapMakie, GLMakie
@@ -46,7 +46,7 @@ model = CartesianDiscreteModel(domain, cell_nums) |> simplexify
 Ω = Triangulation(model)
 
 
-# The visualization of the vertices and edges of Ω can be achieved as follows
+# The visualization of the vertices, edges, and faces of Ω can be achieved as follows
 
 fig = plot(Ω)
 wireframe!(Ω, color=:black, linewidth=2)
@@ -54,7 +54,7 @@ scatter!(Ω, marker=:star8, markersize=20, color=:blue)
 save("images/2d_Fig1.png", fig)
 # ![](_readme/images/2d_Fig1.png)
 
-# We now consider the nodal field uh
+# We now consider a FE function `uh` constructed with Gridap
 
 reffe = ReferenceFE(lagrangian, Float64, 1)
 V = FESpace(model, reffe)
@@ -67,7 +67,7 @@ Colorbar(fig[1,2], plt)
 save("images/2d_Fig11.png", fig)
 # ![](_readme/images/2d_Fig11.png)
 
-# On the other hand, we may as well plot a cell field
+# On the other hand, we may as well plot cell values
 
 celldata = π*rand(num_cells(Ω)) .-1
 fig, _ , plt = plot(Ω, color=celldata, colormap=:heat)
@@ -108,7 +108,7 @@ Colorbar(fig[1,2], plt)
 save("images/3d_Fig3.png", fig)
 # ![](_readme/images/3d_Fig3.png)
 
-# we can even plot FE approximations in certain subdomains, e.g.
+# we can even plot functions in certain subdomains, e.g.
 
 Γ = BoundaryTriangulation(model, tags=["square", "triangle", "circle"])
 fig = plot(Γ, v, colormap=:rainbow, shading=true)
