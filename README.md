@@ -58,7 +58,7 @@ scatter!(Ω, marker=:star8, markersize=20, color=:blue)
 save("images/2d_Fig1.png", fig)
 ````
 
-![](_readme/images/2d_Fig1.png)
+<img src="_readme/images/2d_Fig1.png" width="500">
 
 We now consider a FE function `uh` constructed with Gridap
 
@@ -76,7 +76,7 @@ Colorbar(fig[1,2], plt)
 save("images/2d_Fig11.png", fig)
 ````
 
-![](_readme/images/2d_Fig11.png)
+<img src="_readme/images/2d_Fig11.png" width="500">
 
 On the other hand, we may as well plot cell values
 
@@ -87,7 +87,7 @@ Colorbar(fig[2,1], plt, vertical=false)
 save("images/2d_Fig13.png", fig)
 ````
 
-![](_readme/images/2d_Fig13.png)
+<img src="_readme/images/2d_Fig13.png" width="500">
 
 If we are only interested in the boundary of Ω, namely Γ
 
@@ -98,7 +98,7 @@ Colorbar(fig[1,2], plt)
 save("images/2d_Fig111.png", fig)
 ````
 
-![](_readme/images/2d_Fig111.png)
+<img src="_readme/images/2d_Fig111.png" width="500">
 
 ### 3D Plots
 
@@ -122,16 +122,16 @@ wireframe!(∂Ω, color=:black)
 save("images/3d_Fig1.png", fig)
 ````
 
-![](_readme/images/3d_Fig1.png)
+<img src="_readme/images/3d_Fig1.png" width="500">
 
 ````julia
 v(x) = sin(π*(x[1]+x[2]+x[3]))
 fig, ax, plt = plot(Ω, v, shading=true)
 Colorbar(fig[1,2], plt)
-save("images/3d_Fig3.png", fig)
+save("images/3d_Fig2.png", fig)
 ````
 
-![](_readme/images/3d_Fig3.png)
+<img src="_readme/images/3d_Fig2.png" width="500">
 
 we can even plot functions in certain subdomains, e.g.
 
@@ -139,10 +139,10 @@ we can even plot functions in certain subdomains, e.g.
 Γ = BoundaryTriangulation(model, tags=["square", "triangle", "circle"])
 fig = plot(Γ, v, colormap=:rainbow, shading=true)
 wireframe!(∂Ω, linewidth=0.5, color=:gray)
-save("images/3d_Fig2.png", fig)
+save("images/3d_Fig3.png", fig)
 ````
 
-![](_readme/images/3d_Fig2.png)
+<img src="_readme/images/3d_Fig3.png" width="500">
 
 ### Animations and interactivity
 
@@ -163,7 +163,7 @@ record(fig, "images/animation.gif", timestamps; framerate=framerate) do this_t
 end
 ````
 
-![](_readme/images/animation.gif)
+<img src="_readme/images/animation.gif" width="500">
 
 ---
 
