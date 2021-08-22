@@ -1,3 +1,4 @@
+# Two different plot functions depending on the need of having a continuous or discontinuous mesh. 
 function to_plot_dg_mesh(grid::Grid)
   UnstructuredGrid(grid) |> to_plot_dg_mesh
 end
@@ -14,16 +15,14 @@ function to_plot_mesh(grid::UnstructuredGrid)
     to_simplex_grid(grid) |> to_mesh
 end
 
-function to_simplex_grid(grid)
+# For the moment, we simplexify all grids (missing support for quads or general polytopes).
+function to_simplex_grid(grid::UnstructuredGrid)
   reffes = get_reffes(grid)
   polys = map(get_polytope,reffes)
   all(is_simplex,polys) ? grid : simplexify(grid)
 end
 
-function to_mesh(grid::Grid)
-  grid |> UnstructuredGrid |> to_mesh
-end
-
+# Create continuous GeometryBasics mesh equivalent of our grid.
 function to_mesh(grid::UnstructuredGrid)
   reffes = get_reffes(grid)
   @assert all(reffe->get_order(reffe)==1,reffes)
@@ -39,6 +38,7 @@ function to_mesh(grid::UnstructuredGrid)
   GeometryBasics.Mesh(GeometryBasics.connect(ps,fs))
 end
 
+# Create discontinuous grid with the corresponding handling of nodal or cell fields.
 function to_point(x::VectorValue{D,T}) where {D,T}
   GeometryBasics.Point{D,T}(Tuple(x))
 end
@@ -120,6 +120,7 @@ function to_lowdim_grid(grid::Grid, ::Val{D}) where D
   model = DiscreteModel(grid, topo, labels)
   Grid(ReferenceFE{D}, model)
 end
+
 to_lowdim_grid(grid::Grid{D}, ::Val{D}) where D = grid
 
 to_face_grid(grid::Grid)   = to_lowdim_grid(grid, Val(2))
@@ -167,7 +168,7 @@ function to_grid(trian::Triangulation)
   first(vds).grid
 end
 
-function to_grid(trian::Triangulation, uh)
+function to_grid(trian::Triangulation, uh::Any)
   vds = visualization_data(trian, "", cellfields=[""=>uh])
   grid = first(vds).grid
   nodaldata = first(first(vds).nodaldata)[2]
@@ -177,4 +178,3 @@ end
 
 to_scalar(x) = x
 to_scalar(x::VectorValue) = norm(x)
-
