@@ -1,6 +1,5 @@
 rm("images", force=true, recursive=true)
-mkpath("images")
+rm("models", force=true, recursive=true)
 module README; include("README.jl"); end
 using Literate
-Literate.markdown("README.jl", "..")
-
+Literate.markdown("README.jl", "..", documenter=false)

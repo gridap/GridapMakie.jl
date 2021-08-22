@@ -1,83 +1,185 @@
-```@meta
-EditURL = "<unknown>/README.jl"
-```
-
 # GridapMakie
 
 [![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://gridap.github.io/GridapMakie.jl/stable)
 [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://gridap.github.io/GridapMakie.jl/dev)
-[![Build Status](https://travis-ci.com/gridap/GridapMakie.jl.svg?branch=master)](https://travis-ci.com/gridap/GridapMakie.jl)
+[![Build Status](https://github.com/gridap/GridapMakie.jl/workflows/CI/badge.svg?branch=master)](https://github.com/gridap/GridapMakie.jl/actions)
 [![Coverage](https://codecov.io/gh/gridap/GridapMakie.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/gridap/GridapMakie.jl)
 
-# This package is experimental
+## Overview
 
-Things can and will break without deprecation or warning
+The visualization of numerical results is an important part of finite element (FE) computations. However, before the inception of GridapMakie.jl, the
+only approach available to data visualization of [Gridap.jl](https://github.com/gridap/Gridap.jl) computations was to write simulation
+data to data files (e.g., in vtu format) for later visualization with, e.g., Paraview or VisIt. From the idea of visually inspecting
+data from Julia code directly or to manipulate it with packages of the Julia
+open-source package ecosystem, [GridapMakie.jl](https://github.com/gridap/GridapMakie.jl) is born. As a part of the Google Summer of
+Code 2021 program, GridapMakie adopts [Makie.jl](https://github.com/JuliaPlots/Makie.jl) as a second visualization back-end for
+Gridap.jl simulations. This package is thought as a built-in tool to assess the user in their FE calculations with a smoother workflow
+in a highly intuitive API.
 
-# Examples
+## Installation
 
-```@example README
-using Gridap, GridapMakie, Makie
+According to Makie's guidelines, it is enough to install one of its backends, e.g. GLMakie. Additionally, Gridap provides the plot objects
+to be visualized and `FileIO` allows to save the figures plotted.
 
-model = simplexify(CartesianDiscreteModel((-2pi,2pi,-pi,pi), (20,10)))
-scene = plot(model)
+```julia
+julia> ]
+pkg> add Gridap, GridapMakie, GLMakie, FileIO
 ```
 
-![](_readme/images/2d.png)
+## Examples
 
-```@example README
-data = GridapMakie.demo_data(spacedim=1, valuetype=Float64)
-scene = plot(data.u, data.model)
-```
+First things first, we shall be using the three packages as well as `FileIO`.
+We may as well create directories to store downloaded meshes and output files
 
-![](_readme/images/plot_1d_Scalar.png)
+````julia
+using Gridap, GridapMakie, GLMakie
+using FileIO
+mkdir("models")
+mkdir("images")
+````
 
-```@example README
-model = simplexify(CartesianDiscreteModel((-2pi,2pi,-pi,pi), (10,10)))
-V = TestFESpace(reffe=:Lagrangian, order=1, valuetype = Float64,
-    conformity=:H1, model=model)
-f(pt) = sin(pt[1])*cos(pt[2])
-u = interpolate(V, f)
-scene = mesh(u, model, color=:yellow)
-```
+### 2D Plots
 
-![](_readme/images/mesh_2d_Scalar.png)
+Then, let us consider a simple, 2D simplexified cartesian triangulation Ω
 
-```@example README
-model = simplexify(CartesianDiscreteModel((-2pi,2pi,-pi,pi), (10,10)))
-V = TestFESpace(reffe=:Lagrangian, order=1, valuetype = Float64,
-    conformity=:H1, model=model)
-f(pt) = sin(pt[1])*cos(pt[2])
-u = interpolate(V, f)
-scene = wireframe(u, model)
-```
+````julia
+domain = (0, 1, 0, 1)
+cell_nums = (10, 10)
+model = CartesianDiscreteModel(domain, cell_nums) |> simplexify
+Ω = Triangulation(model)
+````
 
-![](_readme/images/wireframe_2d_Scalar.png)
+The visualization of the vertices, edges, and faces of Ω can be achieved as follows
 
-```@example README
-model = CartesianDiscreteModel((-1,1,-1,1), (10,10))
-V = TestFESpace(reffe=:Lagrangian, order=1, valuetype = VectorValue{2, Float64},
-    conformity=:H1, model=model)
-f(pt) = VectorValue(-pt[2], pt[1])
-u = interpolate(V, f)
-scene = arrows(u, model, arrowsize=0.1, lengthscale=0.5)
-```
+````julia
+fig = plot(Ω)
+wireframe!(Ω, color=:black, linewidth=2)
+scatter!(Ω, marker=:star8, markersize=20, color=:blue)
+save("images/2d_Fig1.png", fig)
+````
 
-![](_readme/images/arrows_2d_Vec2d.png)
+<p align="center">
+<img src="_readme/images/2d_Fig1.png" width="500"/>
+</p>
 
-```@example README
-model = CartesianDiscreteModel((-1,1,-1,1, -1, 1), (10,10, 10))
-V_pressure = TestFESpace(reffe=:Lagrangian, order=1, valuetype=Float64, conformity=:H1, model=model)
-V_velo = TestFESpace(reffe=:Lagrangian, order=1, valuetype=VectorValue{3, Float64},
-    conformity=:H1, model=model)
+We now consider a FE function `uh` constructed with Gridap
 
-pressure = interpolate(V_pressure, pt -> pt[1]*pt[2]*pt[3])
-velocity = interpolate(V_velo, pt -> VectorValue(-pt[3]*pt[2],pt[3]*pt[1], 0.1*pt[1]*pt[2]))
+````julia
+reffe = ReferenceFE(lagrangian, Float64, 1)
+V = FESpace(model, reffe)
+uh = interpolate(x->sin(π*(x[1]+x[2])), V)
+````
 
-color = GridapMakie.to_visualization_data(pressure, model) |> GridapMakie.get_nodalvalues
-scene = arrows(velocity, model, arrowsize=0.1, lengthscale=0.2, arrowcolor=color)
-```
+and plot it over Ω, adding a colorbar
 
-![](_readme/images/arrows_3d_Vec3d_Fancy.png)
+````julia
+fig, _ , plt = plot(Ω, uh)
+Colorbar(fig[1,2], plt)
+save("images/2d_Fig11.png", fig)
+````
+
+<p align="center">
+<img src="_readme/images/2d_Fig11.png" width="500"/>
+</p>
+
+On the other hand, we may as well plot cell values
+
+````julia
+celldata = π*rand(num_cells(Ω)) .-1
+fig, _ , plt = plot(Ω, color=celldata, colormap=:heat)
+Colorbar(fig[2,1], plt, vertical=false)
+save("images/2d_Fig13.png", fig)
+````
+
+<p align="center">
+<img src="_readme/images/2d_Fig13.png" width="500"/>
+</p>
+
+If we are only interested in the boundary of Ω, namely Γ
+
+````julia
+Γ = BoundaryTriangulation(model)
+fig, _ , plt = plot(Γ, uh, colormap=:algae, linewidth=10)
+Colorbar(fig[1,2], plt)
+save("images/2d_Fig111.png", fig)
+````
+
+<p align="center">
+<img src="_readme/images/2d_Fig111.png" width="500"/>
+</p>
+
+### 3D Plots
+
+In addition to the 2D plots, GridapMakie is able to handle more complex geometries. For example,
+take the mesh from the [first Gridap tutorial](https://gridap.github.io/Tutorials/stable/pages/t001_poisson/#Tutorial-1:-Poisson-equation-1),
+which can be downloaded using
+
+````julia
+url = "https://github.com/gridap/GridapMakie.jl/raw/d5d74190e68bd310483fead8a4154235a61815c5/_readme/model.json"
+download(url,"models/model.json")
+````
+
+Therefore, we may as well visualize such mesh
+
+````julia
+model = DiscreteModelFromFile("models/model.json")
+Ω = Triangulation(model)
+∂Ω = BoundaryTriangulation(model)
+fig = plot(Ω, shading=true)
+wireframe!(∂Ω, color=:black)
+save("images/3d_Fig1.png", fig)
+````
+
+<p align="center">
+<img src="_readme/images/3d_Fig1.png" width="500"/>
+</p>
+
+````julia
+v(x) = sin(π*(x[1]+x[2]+x[3]))
+fig, ax, plt = plot(Ω, v, shading=true)
+Colorbar(fig[1,2], plt)
+save("images/3d_Fig2.png", fig)
+````
+
+<p align="center">
+<img src="_readme/images/3d_Fig2.png" width="500"/>
+</p>
+
+we can even plot functions in certain subdomains, e.g.
+
+````julia
+Γ = BoundaryTriangulation(model, tags=["square", "triangle", "circle"])
+fig = plot(Γ, v, colormap=:rainbow, shading=true)
+wireframe!(∂Ω, linewidth=0.5, color=:gray)
+save("images/3d_Fig3.png", fig)
+````
+
+<p align="center">
+<img src="_readme/images/3d_Fig3.png" width="500"/>
+</p>
+
+### Animations and interactivity
+
+Finally, by using Makie [Observables](https://makie.juliaplots.org/stable/interaction/nodes.html), we
+can create animations or interactive plots. For example, if the nodal field has a time dependence
+
+````julia
+t = Observable(0.0)
+u = lift(t) do t
+    x->sin(π*(x[1]+x[2]+x[3]))*cos(π*t)
+end
+fig = plot(Ω, u, colormap=:rainbow, shading=true, colorrange=(-1,1))
+wireframe!(∂Ω, color=:black, linewidth=0.5)
+framerate = 30
+timestamps = range(0, 2, step=1/framerate)
+record(fig, "images/animation.gif", timestamps; framerate=framerate) do this_t
+    t[] = this_t
+end
+````
+
+<p align="center">
+<img src="_readme/images/animation.gif" width="500"/>
+</p>
 
 ---
 
