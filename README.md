@@ -58,7 +58,9 @@ scatter!(Ω, marker=:star8, markersize=20, color=:blue)
 save("images/2d_Fig1.png", fig)
 ````
 
-<img src="_readme/images/2d_Fig1.png" width="500">
+<p align="center">
+<img src="_readme/images/2d_Fig1.png" width="500"/>
+</p>
 
 We now consider a FE function `uh` constructed with Gridap
 
@@ -76,7 +78,9 @@ Colorbar(fig[1,2], plt)
 save("images/2d_Fig11.png", fig)
 ````
 
-<img src="_readme/images/2d_Fig11.png" width="500">
+<p align="center">
+<img src="_readme/images/2d_Fig11.png" width="500"/>
+</p>
 
 On the other hand, we may as well plot cell values
 
@@ -87,7 +91,9 @@ Colorbar(fig[2,1], plt, vertical=false)
 save("images/2d_Fig13.png", fig)
 ````
 
-<img src="_readme/images/2d_Fig13.png" width="500">
+<p align="center">
+<img src="_readme/images/2d_Fig13.png" width="500"/>
+</p>
 
 If we are only interested in the boundary of Ω, namely Γ
 
@@ -98,7 +104,9 @@ Colorbar(fig[1,2], plt)
 save("images/2d_Fig111.png", fig)
 ````
 
-<img src="_readme/images/2d_Fig111.png" width="500">
+<p align="center">
+<img src="_readme/images/2d_Fig111.png" width="500"/>
+</p>
 
 ### 3D Plots
 
@@ -122,7 +130,9 @@ wireframe!(∂Ω, color=:black)
 save("images/3d_Fig1.png", fig)
 ````
 
-<img src="_readme/images/3d_Fig1.png" width="500">
+<p align="center">
+<img src="_readme/images/3d_Fig1.png" width="500"/>
+</p>
 
 ````julia
 v(x) = sin(π*(x[1]+x[2]+x[3]))
@@ -131,7 +141,9 @@ Colorbar(fig[1,2], plt)
 save("images/3d_Fig2.png", fig)
 ````
 
-<img src="_readme/images/3d_Fig2.png" width="500">
+<p align="center">
+<img src="_readme/images/3d_Fig2.png" width="500"/>
+</p>
 
 we can even plot functions in certain subdomains, e.g.
 
@@ -142,7 +154,9 @@ wireframe!(∂Ω, linewidth=0.5, color=:gray)
 save("images/3d_Fig3.png", fig)
 ````
 
-<img src="_readme/images/3d_Fig3.png" width="500">
+<p align="center">
+<img src="_readme/images/3d_Fig3.png" width="500"/>
+</p>
 
 ### Animations and interactivity
 
@@ -163,7 +177,9 @@ record(fig, "images/animation.gif", timestamps; framerate=framerate) do this_t
 end
 ````
 
-<img src="_readme/images/animation.gif" width="500">
+<p align="center">
+<img src="_readme/images/animation.gif" width="500"/>
+</p>
 
 ---
 
