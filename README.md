@@ -160,7 +160,7 @@ save("images/3d_Fig3.png", fig)
 
 ### Animations and interactivity
 
-Finally, by using Makie [Observables](https://makie.juliaplots.org/stable/interaction/nodes.html), we
+Finally, by using Makie [Observables](http://makie.juliaplots.org/v0.15.1/documentation/nodes/index.html), we
 can create animations or interactive plots. For example, if the nodal field has a time dependence
 
 ````julia
