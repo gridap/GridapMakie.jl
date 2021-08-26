@@ -53,7 +53,7 @@ end
         fig   
     end
 end
-aaaa
+
 @testset "Tests 2D" begin
 
     domain = (0,1,0,1)
