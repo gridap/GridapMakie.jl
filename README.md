@@ -8,7 +8,7 @@
 | **Community** |
 | [![Join the chat at https://gitter.im/Gridap-jl/community](https://badges.gitter.im/Gridap-jl/community.svg)](https://gitter.im/Gridap-jl/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) |
 | **Acknowledgement** |
-| [<img src="https://developers.google.com/open-source/gsoc/resources/downloads/GSoC-logo-horizontal.svg" alt="GSoC" width="250"/>](https://summerofcode.withgoogle.com/projects/#6231266174697472)  |
+| [<img src="https://developers.google.com/open-source/gsoc/resources/downloads/GSoC-logo-horizontal.svg" alt="GSoC" width="220"/>](https://summerofcode.withgoogle.com/projects/#6231266174697472)  |
 
 
 [![Build Status](https://github.com/gridap/GridapMakie.jl/workflows/CI/badge.svg?branch=master)](https://github.com/gridap/GridapMakie.jl/actions)
