@@ -11,9 +11,6 @@
 | [<img src="https://developers.google.com/open-source/gsoc/resources/downloads/GSoC-logo-horizontal.svg" alt="GSoC" width="220"/>](https://summerofcode.withgoogle.com/projects/#6231266174697472)  |
 
 
-[![Build Status](https://github.com/gridap/GridapMakie.jl/workflows/CI/badge.svg?branch=master)](https://github.com/gridap/GridapMakie.jl/actions)
-
-
 ## Overview
 
 The visualization of numerical results is an important part of finite element (FE) computations. However, before the inception of GridapMakie.jl, the
