@@ -1,9 +1,18 @@
 # GridapMakie
 
-[![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://gridap.github.io/GridapMakie.jl/stable)
-[![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://gridap.github.io/GridapMakie.jl/dev)
+| **Documentation** |
+|:------------ |
+| [![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://gridap.github.io/GridapMakie.jl/stable) [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://gridap.github.io/GridapMakie.jl/dev) |
+|**Build Status** |
+| [![Build Status](https://github.com/gridap/GridapMakie.jl/workflows/CI/badge.svg?branch=master)](https://github.com/gridap/GridapMakie.jl/actions) [![Coverage](https://codecov.io/gh/gridap/GridapMakie.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/gridap/GridapMakie.jl) |
+| **Community** |
+| [![Join the chat at https://gitter.im/Gridap-jl/community](https://badges.gitter.im/Gridap-jl/community.svg)](https://gitter.im/Gridap-jl/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) |
+| **Acknowledgement** |
+| [<img src="https://developers.google.com/open-source/gsoc/resources/downloads/GSoC-logo-horizontal.svg" alt="GSoC" width="250"/>](https://summerofcode.withgoogle.com/projects/#6231266174697472)  |
+
+
 [![Build Status](https://github.com/gridap/GridapMakie.jl/workflows/CI/badge.svg?branch=master)](https://github.com/gridap/GridapMakie.jl/actions)
-[![Coverage](https://codecov.io/gh/gridap/GridapMakie.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/gridap/GridapMakie.jl)
+
 
 ## Overview
 
@@ -15,6 +24,10 @@ open-source package ecosystem, [GridapMakie.jl](https://github.com/gridap/Gridap
 Code 2021 program, GridapMakie adopts [Makie.jl](https://github.com/JuliaPlots/Makie.jl) as a second visualization back-end for
 Gridap.jl simulations. This package is thought as a built-in tool to assess the user in their FE calculations with a smoother workflow
 in a highly intuitive API.
+
+## Acknowledgement
+
+A significant part of this package has been developed in the framework of the Google Summer of Code 2021 project [[Gridap] Visualizing PDE approximations in Julia with Gridap.jl and Makie.jl](https://summerofcode.withgoogle.com/projects/#6231266174697472).
 
 ## Installation
 
