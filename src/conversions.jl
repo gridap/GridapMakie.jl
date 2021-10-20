@@ -4,7 +4,17 @@ function to_plot_dg_mesh(grid::Grid)
 end
 
 function to_plot_dg_mesh(grid::UnstructuredGrid)
-    to_simplex_grid(grid) |> to_dg_mesh
+  reffes = get_reffes(grid)
+  @assert length(reffes) == 1
+  reffe = first(reffes)
+  poly = get_polytope(reffe)
+  if is_simplex(poly)
+    to_dg_mesh_tri(grid)
+  elseif is_n_cube(poly)
+    to_dg_mesh_quad(grid)
+  else
+    to_simplex_grid(grid) |> to_dg_mesh_tri
+  end
 end
 
 function to_plot_mesh(grid::Grid)
@@ -49,7 +59,7 @@ function to_dg_points(grid::UnstructuredGrid)
   [to_point(x) for x in coords]
 end
 
-function to_dg_mesh(grid::UnstructuredGrid)
+function to_dg_mesh_tri(grid::UnstructuredGrid)
   ps = to_dg_points(grid)
   Dc = num_cell_dims(grid)
   Tc = Int32
@@ -65,6 +75,26 @@ function to_dg_mesh(grid::UnstructuredGrid)
   end
   fs = lazy_map(GeometryBasics.NgonFace{Dc+1,Tc}, cns) |> collect
   GeometryBasics.connect(ps, fs) |> GeometryBasics.Mesh
+end
+
+function to_dg_mesh_quad(grid::UnstructuredGrid)
+  gridap_to_makie = [1,2,4,3]
+  ps = to_dg_points(grid)
+  Dc = num_cell_dims(grid)
+  Tc = Int32
+  nlnodes = 4
+  cns = Vector{GeometryBasics.QuadFace{Tc}}(undef, num_cells(grid))
+  i = 1
+  for cell in 1:num_cells(grid)
+    cn = zeros(Tc, nlnodes)
+    for lnode in 1:nlnodes
+      cn[lnode] = i
+      i += one(Tc)
+    end
+    cns[cell] = convert(GeometryBasics.QuadFace{Tc},cn[gridap_to_makie])
+   # cns[cell] = convert(GeometryBasics.QuadFace{Tc},cn)
+  end
+  GeometryBasics.Mesh(ps,cns)
 end
 
 function to_dg_node_values(grid::Grid, node_value::Vector)
@@ -156,7 +186,7 @@ function to_face_grid_with_map(grid::Grid)
   face_to_m = collect(m_Γ(x_Γ))
   g = UnstructuredGrid(Grid(ReferenceFE{D}, model))
   face_to_nodes = get_cell_node_ids(g)
-  _fixnodeids!(face_to_nodes,face_to_m,face_to_n)
+  #_fixnodeids!(face_to_nodes,face_to_m,face_to_n)
   face_to_cells = get_faces(topo,D,num_cell_dims(grid))
   face_to_cell = lazy_map(getindex,face_to_cells,Fill(1,nfaces))
   g,face_to_cell

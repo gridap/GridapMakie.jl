@@ -57,7 +57,8 @@ function Makie.plot!(plot::Makie.Mesh{<:Tuple{PlotGrid}})
       face_grid = Makie.lift(first, face_grid_and_map)
       face_to_cell = Makie.lift(i->i[2], face_grid_and_map)
       face_color = Makie.lift(setup_face_color, plot[:color], grid, face_to_cell)
-      mesh = Makie.lift(m->m|>to_plot_dg_mesh|>GeometryBasics.normal_mesh, face_grid)
+      #mesh = Makie.lift(m->m|>to_plot_dg_mesh|>GeometryBasics.normal_mesh, face_grid)
+      mesh = Makie.lift(m->m|>to_plot_dg_mesh, face_grid)
       color = Makie.lift(setup_color, face_color, face_grid)
     else
       @unreachable
@@ -66,7 +67,7 @@ function Makie.plot!(plot::Makie.Mesh{<:Tuple{PlotGrid}})
     # plot.attributes.attributes returns a Dict{Symbol, Observable} to be called by any function.
     # plot.attributes returns an Attributes type.
     if D in (2,3)
-        Makie.mesh!(plot, mesh;
+        Makie.poly!(plot, mesh;
             plot.attributes.attributes...,
             color = color,
         )
