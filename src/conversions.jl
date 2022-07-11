@@ -1,4 +1,4 @@
-# Two different plot functions depending on the need of having a continuous or discontinuous mesh. 
+# Two different plot functions depending on the need of having a continuous or discontinuous mesh.
 function to_plot_dg_mesh(grid::Grid)
   UnstructuredGrid(grid) |> to_plot_dg_mesh
 end
@@ -178,3 +178,8 @@ end
 
 to_scalar(x) = x
 to_scalar(x::VectorValue) = norm(x)
+
+
+function Makie.point_iterator(pg::PlotGrid)
+    UnstructuredGrid(pg.grid) |> to_dg_points
+end
