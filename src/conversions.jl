@@ -178,8 +178,3 @@ end
 
 to_scalar(x) = x
 to_scalar(x::VectorValue) = norm(x)
-
-
-function Makie.point_iterator(pg::PlotGrid)
-    UnstructuredGrid(pg.grid) |> to_dg_points
-end
