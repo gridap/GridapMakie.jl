@@ -1,4 +1,4 @@
-# Two different plot functions depending on the need of having a continuous or discontinuous mesh. 
+# Two different plot functions depending on the need of having a continuous or discontinuous mesh.
 function to_plot_dg_mesh(grid::Grid)
   UnstructuredGrid(grid) |> to_plot_dg_mesh
 end

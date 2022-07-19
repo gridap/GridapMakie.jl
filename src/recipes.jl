@@ -41,7 +41,7 @@ mesh_theme = Makie.Theme(
 function Makie.default_theme(scene,::Type{<:Makie.Mesh{<:Tuple{PlotGrid}}})
     merge!(
         mesh_theme,
-        Makie.default_theme(scene, Makie.Mesh) 
+        Makie.default_theme(scene, Makie.Mesh)
     )
 end
 
@@ -119,9 +119,9 @@ Makie.plottype(::Triangulation) = Makie.Mesh
     )
 end
 
-# We explicitly set the colorrange property of p to (min, max) of the color provided. Here, when we use mesh(), 
-# Makie fills the attribute plots of p (p.plots) with the given attributes. Hence, p.plots[1] inherits the colorrange 
-# of p (this is just to draw colorbars). Another way would be using $ Colorbar(fig[1,2], plt.plots[1]), but quite less 
+# We explicitly set the colorrange property of p to (min, max) of the color provided. Here, when we use mesh(),
+# Makie fills the attribute plots of p (p.plots) with the given attributes. Hence, p.plots[1] inherits the colorrange
+# of p (this is just to draw colorbars). Another way would be using $ Colorbar(fig[1,2], plt.plots[1]), but quite less
 # appealing from the point of view of the user.
 function Makie.plot!(p::MeshField{<:Tuple{Triangulation, Any}})
     trian, uh = p[1:2]
@@ -153,3 +153,8 @@ function Makie.plot!(p::MeshField{<:Tuple{CellField}})
 end
 
 Makie.plottype(::CellField) = MeshField
+
+
+function Makie.point_iterator(pg::PlotGrid)
+    UnstructuredGrid(pg.grid) |> to_dg_points
+end
