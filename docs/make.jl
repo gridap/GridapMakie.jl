@@ -9,7 +9,6 @@ makedocs(;
     repo="https://github.com/gridap/GridapMakie.jl/blob/{commit}{path}#L{line}",
     sitename="GridapMakie.jl",
     authors="The GridapMakie project contributors",
-    assets=String[],
 )
 
 deploydocs(;
