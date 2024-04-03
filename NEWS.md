@@ -18,5 +18,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Visualization of vertices, edges, and faces of Gridap `Triangulation` objects made of simplices.
-- Visualization of scalar-valued `CellField` and related objects on `Triangulaiton` objects made of simplices.
+- Visualization of scalar-valued `CellField` and related objects on `Triangulation` objects made of simplices.
 
