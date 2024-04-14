@@ -2,7 +2,7 @@ module TestGridapMakie
 
 using GridapMakie
 using Gridap
-using GLMakie
+using CairoMakie
 using Test
 
 import FileIO
