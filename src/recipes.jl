@@ -90,8 +90,7 @@ function Makie.convert_arguments(::Type{<:Makie.Wireframe}, pg::PlotGrid)
     println("convert1")
     grid = get_grid(pg)
     mesh = to_plot_mesh(grid)
-    #(mesh, )
-    mesh
+    (mesh, )
 end
 
 function Makie.convert_arguments(::Type{<:Makie.Scatter}, pg::PlotGrid)
@@ -105,7 +104,9 @@ end
 function Makie.convert_arguments(::Type{<:Makie.Mesh}, trian::Triangulation)
     println("convert3")
     grid = to_grid(trian)
-    (PlotGrid(grid), )
+     #(PlotGrid(grid), )
+    mesh = to_plot_mesh(grid)
+    (mesh, )
 end
 
 function Makie.convert_arguments(t::Type{<:Union{Makie.Wireframe, Makie.Scatter}}, trian::Triangulation)
