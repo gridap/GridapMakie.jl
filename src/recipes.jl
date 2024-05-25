@@ -87,6 +87,7 @@ end
 
 # No need to create discontinuous meshes for wireframe and scatter.
 function Makie.convert_arguments(::Type{<:Makie.Wireframe}, pg::PlotGrid)
+    println("convert1")
     grid = get_grid(pg)
     mesh = to_plot_mesh(grid)
     #(mesh, )
@@ -94,6 +95,7 @@ function Makie.convert_arguments(::Type{<:Makie.Wireframe}, pg::PlotGrid)
 end
 
 function Makie.convert_arguments(::Type{<:Makie.Scatter}, pg::PlotGrid)
+    println("convert2")
     grid = get_grid(pg)
     node_coords = get_node_coordinates(grid)
     x = map(to_point, node_coords)
@@ -101,11 +103,13 @@ function Makie.convert_arguments(::Type{<:Makie.Scatter}, pg::PlotGrid)
 end
 
 function Makie.convert_arguments(::Type{<:Makie.Mesh}, trian::Triangulation)
+    println("convert3")
     grid = to_grid(trian)
     (PlotGrid(grid), )
 end
 
 function Makie.convert_arguments(t::Type{<:Union{Makie.Wireframe, Makie.Scatter}}, trian::Triangulation)
+    println("convert4")
     grid = to_grid(trian)
     Makie.convert_arguments(t, PlotGrid(grid))
 end
@@ -125,6 +129,7 @@ end
 # of p (this is just to draw colorbars). Another way would be using $ Colorbar(fig[1,2], plt.plots[1]), but quite less
 # appealing from the point of view of the user.
 function Makie.plot!(p::MeshField{<:Tuple{Triangulation, Any}})
+    println("plot1")
     trian, uh = p[1:2]
     grid_and_data = Makie.lift(to_grid, trian, uh)
     pg = Makie.lift(i->PlotGrid(i[1]), grid_and_data)
@@ -140,6 +145,7 @@ end
 Makie.plottype(::Triangulation, ::Any) = MeshField
 
 function Makie.plot!(p::MeshField{<:Tuple{CellField}})
+    println("plot2")
     uh = p[1]
     trian = Makie.lift(get_triangulation, uh)
     grid_and_data = Makie.lift(to_grid, trian, uh)
