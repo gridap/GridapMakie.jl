@@ -132,12 +132,18 @@ end
 function Makie.plot!(p::MeshField{<:Tuple{Triangulation, Any}})
     println("plot1")
     trian, uh = p[1:2]
+    println(typeof(uh))
     grid_and_data = Makie.lift(to_grid, trian, uh)
+    println("1")
     pg = Makie.lift(i->PlotGrid(i[1]), grid_and_data)
+    println("2")
     p[:color] = Makie.lift(i->i[2], grid_and_data)
+    println("3")
     if p[:colorrange][] === Makie.automatic
+        println("4")
         p[:colorrange] = Makie.lift(extrema, p[:color])
     end
+    println("5")
     Makie.mesh!(p, pg;
         p.attributes.attributes...
     )
