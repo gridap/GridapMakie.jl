@@ -31,7 +31,7 @@ end
 mesh_theme = Makie.Theme(
         color      = :pink,
         colormap   = :bluesreds,
-        shading    = false,
+        shading    = Makie.automatic,
         cycle      = nothing
 )
 
