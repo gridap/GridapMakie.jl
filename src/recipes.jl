@@ -104,9 +104,9 @@ end
 function Makie.convert_arguments(::Type{<:Makie.Mesh}, trian::Triangulation)
     println("convert3")
     grid = to_grid(trian)
-     #(PlotGrid(grid), )
-    mesh = to_plot_mesh(grid)
-    (mesh, )
+    (PlotGrid(grid), )
+    #mesh = to_plot_mesh(grid)
+    #(mesh, )
 end
 
 function Makie.convert_arguments(t::Type{<:Union{Makie.Wireframe, Makie.Scatter}}, trian::Triangulation)
