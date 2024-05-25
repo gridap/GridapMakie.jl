@@ -104,9 +104,9 @@ end
 function Makie.convert_arguments(::Type{<:Makie.Mesh}, trian::Triangulation)
     println("convert3")
     grid = to_grid(trian)
-    (PlotGrid(grid), )
-    #mesh = to_plot_mesh(grid)
-    #(mesh, )
+    #(PlotGrid(grid), )
+    mesh = to_plot_mesh(grid)
+    (mesh, )
 end
 
 function Makie.convert_arguments(t::Type{<:Union{Makie.Wireframe, Makie.Scatter}}, trian::Triangulation)
@@ -148,6 +148,7 @@ Makie.plottype(::Triangulation, ::Any) = MeshField
 function Makie.plot!(p::MeshField{<:Tuple{CellField}})
     println("plot2")
     uh = p[1]
+    println(typeof(uh))
     trian = Makie.lift(get_triangulation, uh)
     grid_and_data = Makie.lift(to_grid, trian, uh)
     pg = Makie.lift(i->PlotGrid(i[1]), grid_and_data)
