@@ -7,6 +7,7 @@ Gridap.Geometry.get_grid(pg::PlotGrid) = pg.grid
 setup_color(color::Union{Symbol, Makie.Colorant}, ::Grid) = color
 
 function setup_color(color::AbstractArray, grid::Grid)
+    println("setup_color")
     color = if length(color) == num_nodes(grid)
                 to_dg_node_values(grid, color)
             elseif length(color) == num_cells(grid)
@@ -19,6 +20,7 @@ end
 setup_face_color(color::Union{Symbol, Makie.Colorant}, ::Grid, ::Any) = color
 
 function setup_face_color(color::AbstractArray, grid::Grid, face_to_cell)
+    println("setup_face_color")
     color = if length(color) == num_nodes(grid)
                 color
             elseif length(color) == num_cells(grid)
@@ -47,6 +49,7 @@ end
 
 # The lift function is necessary when dealing with reactive attributes or Observables.
 function Makie.plot!(plot::Makie.Mesh{<:Tuple{PlotGrid}})
+    println("plot!1")
     grid = Makie.lift(get_grid, plot[1])
     D = num_cell_dims(grid[])
     if D in (0,1,2)
@@ -172,5 +175,6 @@ Makie.plottype(::CellField) = MeshField
 
 
 function Makie.point_iterator(pg::PlotGrid)
+    println("point_terator")
     UnstructuredGrid(pg.grid) |> to_dg_points
 end
