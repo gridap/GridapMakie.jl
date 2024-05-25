@@ -135,7 +135,8 @@ function Makie.plot!(p::MeshField{<:Tuple{Triangulation, Any}})
     println(typeof(uh))
     grid_and_data = Makie.lift(to_grid, trian, uh)
     println("1")
-    pg = Makie.lift(i->PlotGrid(i[1]), grid_and_data)
+    #pg = Makie.lift(i->PlotGrid(i[1]), grid_and_data)
+    mesh = Makie.lift(i->to_plot_mesh(i[1]), grid_and_data)
     println("2")
     p[:color] = Makie.lift(i->i[2], grid_and_data)
     println("3")
@@ -144,7 +145,7 @@ function Makie.plot!(p::MeshField{<:Tuple{Triangulation, Any}})
         p[:colorrange] = Makie.lift(extrema, p[:color])
     end
     println("5")
-    Makie.mesh!(p, pg;
+    Makie.mesh!(p, mesh;
         p.attributes.attributes...
     )
 end
