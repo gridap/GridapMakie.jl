@@ -89,7 +89,8 @@ end
 function Makie.convert_arguments(::Type{<:Makie.Wireframe}, pg::PlotGrid)
     grid = get_grid(pg)
     mesh = to_plot_mesh(grid)
-    (mesh, )
+    #(mesh, )
+    mesh
 end
 
 function Makie.convert_arguments(::Type{<:Makie.Scatter}, pg::PlotGrid)
