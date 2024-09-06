@@ -135,7 +135,7 @@ Therefore, we may as well visualize such mesh
 model = DiscreteModelFromFile("models/model.json")
 Ω = Triangulation(model)
 ∂Ω = BoundaryTriangulation(model)
-fig = plot(Ω,axis=(type=Makie.Axis3,aspect=:data))
+fig = plot(Ω)
 wireframe!(∂Ω, color=:black)
 save("images/3d_Fig1.png", fig)
 ````
@@ -146,7 +146,7 @@ save("images/3d_Fig1.png", fig)
 
 ````julia
 v(x) = sin(π*(x[1]+x[2]+x[3]))
-fig, ax, plt = plot(Ω, v,axis=(type=Makie.Axis3,aspect=:data))
+fig, ax, plt = plot(Ω, v)
 Colorbar(fig[1,2], plt)
 save("images/3d_Fig2.png", fig)
 ````
@@ -159,7 +159,7 @@ we can even plot functions in certain subdomains, e.g.
 
 ````julia
 Γ = BoundaryTriangulation(model, tags=["square", "triangle", "circle"])
-fig = plot(Γ, v, colormap=:rainbow,axis=(type=Makie.Axis3,aspect=:data))
+fig = plot(Γ, v, colormap=:rainbow)
 wireframe!(∂Ω, linewidth=0.5, color=:gray)
 save("images/3d_Fig3.png", fig)
 ````
@@ -178,7 +178,7 @@ t = Observable(0.0)
 u = lift(t) do t
     x->sin(π*(x[1]+x[2]+x[3]))*cos(π*t)
 end
-fig = plot(Ω, u, colormap=:rainbow, colorrange=(-1,1),axis=(type=Makie.Axis3,aspect=:data))
+fig = plot(Ω, u, colormap=:rainbow, colorrange=(-1,1))
 wireframe!(∂Ω, color=:black, linewidth=0.5)
 framerate = 30
 timestamps = range(0, 2, step=1/framerate)
@@ -194,4 +194,3 @@ end
 ---
 
 *This page was generated using [Literate.jl](https://github.com/fredrikekre/Literate.jl).*
-
