@@ -88,38 +88,38 @@ end
     celldata = rand(num_cells(Ω))
 
     @test savefig("3d_Fig1") do
-        fig = plot(Ω,axis=(type=Makie.Axis3,aspect=:data))
+        fig = plot(Ω)
         wireframe!(Ω)
         scatter!(Ω)
         fig
     end
     @test savefig("3d_Fig11") do
-        fig, _ , sc = plot(Ω, uh, colorrange=(0,1),axis=(type=Makie.Axis3,aspect=:data))
+        fig, _ , sc = plot(Ω, uh, colorrange=(0,1))
         Colorbar(fig[1,2],sc)
         fig
     end
     @test savefig("3d_Fig111") do
-        fig, _ , sc = plot(Γ, uh, colormap=:algae,axis=(type=Makie.Axis3,aspect=:data))
+        fig, _ , sc = plot(Γ, uh, colormap=:algae)
         Colorbar(fig[1,2],sc)
         fig
     end
     @test savefig("3d_Fig12") do
-        fig = plot(Ω, color=:green,axis=(type=Makie.Axis3,aspect=:data))
+        fig = plot(Ω, color=:green)
         wireframe!(Ω, color=:red, linewidth=2.5)
         fig
     end
     @test savefig("3d_Fig13") do
-      fig, _ , plt = plot(Ω, color=3*celldata, colormap=:heat,axis=(type=Makie.Axis3,aspect=:data))
+        fig, _ , plt = plot(Ω, color=3*celldata, colormap=:heat)
         Colorbar(fig[1,2], plt)
         fig
     end
     @test savefig("3d_Fig14") do
-        fig, _ , plt = plot(Λ, jump(n_Λ⋅∇(uh)),axis=(type=Makie.Axis3,aspect=:data))
+        fig, _ , plt = plot(Λ, jump(n_Λ⋅∇(uh)))
         Colorbar(fig[1,2],plt)
         fig
     end
     @test savefig("3d_fig15") do 
-      fig, _ , plt = plot(uh, colormap=:Spectral, colorrange=(0,1))
+        fig, _ , plt = plot(uh, colormap=:Spectral, colorrange=(0,1))
         Colorbar(fig[1,2], plt)
         fig   
     end
