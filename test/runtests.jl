@@ -109,7 +109,7 @@ end
         fig
     end
     @test savefig("3d_Fig13") do
-      fig, _ , plt = plot(Ω, color=3*celldata, colormap=:heat)
+        fig, _ , plt = plot(Ω, color=3*celldata, colormap=:heat)
         Colorbar(fig[1,2], plt)
         fig
     end
@@ -119,7 +119,7 @@ end
         fig
     end
     @test savefig("3d_fig15") do 
-      fig, _ , plt = plot(uh, colormap=:Spectral, colorrange=(0,1))
+        fig, _ , plt = plot(uh, colormap=:Spectral, colorrange=(0,1))
         Colorbar(fig[1,2], plt)
         fig   
     end
