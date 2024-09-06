@@ -110,7 +110,9 @@ end
 
 # Set default plottype as mesh if argument is type Triangulation, i.e., mesh(Ω) == plot(Ω).
 Makie.plottype(::Triangulation) = PlotGridMesh
+Makie.args_preferred_axis(t::Triangulation)= num_point_dims(t)<=2 ? Makie.Axis : Makie.LScene
 Makie.plottype(::PlotGrid) = PlotGridMesh
+Makie.args_preferred_axis(pg::PlotGrid)= num_point_dims(pg.Grid)<=2 ? Makie.Axis : Makie.LScene
 
 @Makie.recipe(MeshField) do scene
     merge!(
@@ -153,7 +155,7 @@ function Makie.plot!(p::MeshField{<:Tuple{CellField}})
 end
 
 Makie.plottype(::CellField) = MeshField
-
+Makie.args_preferred_axis(c::CellField)= num_point_dims(get_triangulation(c))<=2 ? Makie.Axis : Makie.LScene
 
 function Makie.point_iterator(pg::PlotGrid)
     UnstructuredGrid(pg.grid) |> to_dg_points
