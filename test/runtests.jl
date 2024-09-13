@@ -21,6 +21,39 @@ function savefig(f, suffix::String)
     return true
 end
 
+@testset "Tests 1D" begin
+
+    domain = (0,1)
+    cell_nums = 10
+    model = CartesianDiscreteModel(domain,cell_nums)
+    Ω = Triangulation(model)
+    reffe = ReferenceFE(lagrangian,Float64,1)
+    V = FESpace(model,reffe)
+    uh = interpolate(x->sin(π*(x[1])),V)
+    celldata = rand(num_cells(Ω))
+
+    @test_broken savefig("1d_Fig1") do
+        fig = wireframe(Ω, color=:black)
+        scatter!(Ω, color=:green)
+        fig
+    end
+    @test savefig("1d_Fig11") do
+        fig, _ , plt = plot(Ω, uh)
+        Colorbar(fig[1,2], plt)
+        fig
+    end
+    @test savefig("1d_Fig13") do
+        fig, _ , plt = plot(Ω, color=3*celldata, colormap=:heat)
+        Colorbar(fig[1,2], plt)
+        fig
+    end
+    @test savefig("1d_fig15") do 
+        fig, _ , plt = plot(uh, colormap=:Spectral)
+        Colorbar(fig[1,2], plt)
+        fig   
+    end
+end
+
 @testset "Tests 2D" begin
 
     domain = (0,1,0,1)
@@ -42,13 +75,13 @@ end
         fig
     end
     @test savefig("2d_Fig11") do
-        fig, _ , sc = plot(Ω, uh)
-        Colorbar(fig[1,2], sc)
+        fig, _ , plt = plot(Ω, uh)
+        Colorbar(fig[1,2], plt)
         fig
     end
     @test savefig("2d_Fig111") do
-        fig,_,sc = plot(Γ, uh, colormap=:algae, linewidth=10)
-        Colorbar(fig[1,2],sc)
+        fig, _ , plt = plot(Γ, uh, colormap=:algae, linewidth=10)
+        Colorbar(fig[1,2], plt)
         fig
     end
     @test savefig("2d_Fig12") do
@@ -94,13 +127,13 @@ end
         fig
     end
     @test savefig("3d_Fig11") do
-        fig, _ , sc = plot(Ω, uh, colorrange=(0,1))
-        Colorbar(fig[1,2],sc)
+        fig, _ , plt = plot(Ω, uh, colorrange=(0,1))
+        Colorbar(fig[1,2], plt)
         fig
     end
     @test savefig("3d_Fig111") do
-        fig, _ , sc = plot(Γ, uh, colormap=:algae)
-        Colorbar(fig[1,2],sc)
+        fig, _ , plt = plot(Γ, uh, colormap=:algae)
+        Colorbar(fig[1,2], plt)
         fig
     end
     @test savefig("3d_Fig12") do
