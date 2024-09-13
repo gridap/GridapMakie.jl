@@ -64,6 +64,10 @@ fig=plot(uh)
 save("images/1d_Fig1.png", fig)
 ````
 
+<p align="center">
+<img src="_readme/images/1d_Fig1.png" width="500"/>
+</p>
+
 We may also plot the function with a line and its value at the boundaries
 ````julia
 Γ = BoundaryTriangulation(model)
@@ -71,6 +75,10 @@ fig=lines(Ω,u)
 plot!(Γ,uh,color=:red)
 save("images/1d_Fig2.png", fig)
 ````
+
+<p align="center">
+<img src="_readme/images/1d_Fig2.png" width="500"/>
+</p>
 
 ### 2D Plots
 
