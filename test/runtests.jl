@@ -21,6 +21,27 @@ function savefig(f, suffix::String)
     return true
 end
 
+@testset "Tests 1D" begin
+    model = CartesianDiscreteModel((0,15),90)
+    Ω = Triangulation(model)
+    reffe = ReferenceFE(lagrangian, Float64, 1)
+    V = FESpace(model, reffe)
+    u=x->cos(π*x[1])*exp(-x[1]/10)
+    uh = interpolate(u, V)
+    Γ = BoundaryTriangulation(model)
+
+    @test savefig("1d_Fig1") do
+        fig = lines(Ω,u)
+        scatter!(uh,color=:red)
+        fig
+    end
+    @test savefig("1d_Fig2") do
+        fig=scatterlines(uh)
+        plot!(Γ,uh,color=:red)
+        fig
+    end
+end
+
 @testset "Tests 2D" begin
 
     domain = (0,1,0,1)

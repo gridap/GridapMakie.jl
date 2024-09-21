@@ -109,7 +109,8 @@ function Makie.convert_arguments(t::Type{<:Union{Makie.Wireframe, Makie.Scatter}
 end
 
 # Set default plottype as mesh if argument is type Triangulation, i.e., mesh(Ω) == plot(Ω).
-Makie.plottype(::Triangulation) = PlotGridMesh
+Makie.plottype(::Triangulation{Dc,1}) where Dc = Makie.Scatter
+Makie.plottype(::Triangulation{Dc,Dp}) where {Dc,Dp} = PlotGridMesh
 Makie.args_preferred_axis(t::Triangulation)= num_point_dims(t)<=2 ? Makie.Axis : Makie.LScene
 Makie.plottype(::PlotGrid) = PlotGridMesh
 Makie.args_preferred_axis(pg::PlotGrid)= num_point_dims(pg.Grid)<=2 ? Makie.Axis : Makie.LScene
@@ -138,7 +139,8 @@ function Makie.plot!(p::MeshField{<:Tuple{Triangulation, Any}})
     )
 end
 
-Makie.plottype(::Triangulation, ::Any) = MeshField
+Makie.plottype(::Triangulation{Dc,1}, ::Any) where Dc = Makie.Scatter
+Makie.plottype(::Triangulation{Dc,Dp}, ::Any) where {Dc,Dp} = MeshField
 
 function Makie.plot!(p::MeshField{<:Tuple{CellField}})
     uh = p[1]
@@ -154,8 +156,21 @@ function Makie.plot!(p::MeshField{<:Tuple{CellField}})
     )
 end
 
-Makie.plottype(::CellField) = MeshField
-Makie.args_preferred_axis(c::CellField)= num_point_dims(get_triangulation(c))<=2 ? Makie.Axis : Makie.LScene
+function Makie.convert_arguments(::Union{Type{Makie.Lines},Type{Makie.ScatterLines},Type{Makie.Scatter}}, c::CellField)
+    trian=get_triangulation(c)
+    if num_point_dims(trian)==1
+        return to_point1D(trian, c)
+    else
+        ArgumentError("This function requires a 1D CellField")
+    end
+end
+
+function Makie.convert_arguments(::Union{Type{Makie.Lines},Type{Makie.ScatterLines},Type{Makie.Scatter}}, trian::Triangulation{Dc,1}, uh::Any=x->0.0) where Dc
+    return to_point1D(trian, uh)
+end
+
+Makie.plottype(c::CellField) = Makie.plottype(get_triangulation(c),c)
+Makie.args_preferred_axis(c::CellField)= Makie.args_preferred_axis(get_triangulation(c))
 
 function Makie.point_iterator(pg::PlotGrid)
     UnstructuredGrid(pg.grid) |> to_dg_points

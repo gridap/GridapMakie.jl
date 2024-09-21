@@ -47,6 +47,38 @@ using FileIO
 mkdir("models")
 mkdir("images")
 ````
+### 1D Plots
+Let us consider a 1D triangulation Ω, a function `u` and the corresponding FE function `uh` constructed with Gridap
+````julia
+model = CartesianDiscreteModel((0,15),150)
+Ω = Triangulation(model)
+reffe = ReferenceFE(lagrangian, Float64, 1)
+V = FESpace(model, reffe)
+u=x->cos(π*x[1])*exp(-x[1]/10)
+uh = interpolate(u, V)
+````
+
+The visualization of the function can be achieved as follows
+````julia
+fig=plot(uh)
+save("images/1d_Fig1.png", fig)
+````
+
+<p align="center">
+<img src="_readme/images/1d_Fig1.png" width="500"/>
+</p>
+
+We may also plot the function with a line and its value at the boundaries
+````julia
+Γ = BoundaryTriangulation(model)
+fig=lines(Ω,u)
+plot!(Γ,uh,color=:red)
+save("images/1d_Fig2.png", fig)
+````
+
+<p align="center">
+<img src="_readme/images/1d_Fig2.png" width="500"/>
+</p>
 
 ### 2D Plots
 

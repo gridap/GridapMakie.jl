@@ -178,3 +178,10 @@ end
 
 to_scalar(x) = x
 to_scalar(x::VectorValue) = norm(x)
+
+function to_point1D(trian::Triangulation{Dc,1}, uh::Any) where Dc
+  vds = first(visualization_data(trian, "", cellfields=["uh"=>uh]))
+  y = vds.nodaldata["uh"]
+  x = map(y->y[1], get_node_coordinates(vds.grid))
+  x, y
+end
