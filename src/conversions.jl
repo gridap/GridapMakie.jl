@@ -35,7 +35,7 @@ function to_mesh(grid::UnstructuredGrid)
   Tc = eltype(eltype(cns))
   Dc = num_cell_dims(grid)
   fs = collect(lazy_map(GeometryBasics.NgonFace{Dc+1,Tc},cns))
-  GeometryBasics.Mesh(GeometryBasics.connect(ps,fs))
+  GeometryBasics.Mesh(ps,fs)
 end
 
 # Create discontinuous grid with the corresponding handling of nodal or cell fields.
@@ -64,7 +64,7 @@ function to_dg_mesh(grid::UnstructuredGrid)
     cns[cell] = cn
   end
   fs = lazy_map(GeometryBasics.NgonFace{Dc+1,Tc}, cns) |> collect
-  GeometryBasics.connect(ps, fs) |> GeometryBasics.Mesh
+  GeometryBasics.Mesh(ps,fs)
 end
 
 function to_dg_node_values(grid::Grid, node_value::Vector)
