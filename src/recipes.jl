@@ -1,9 +1,3 @@
-struct PlotGrid{G<:Grid}
-    grid::G
-end
-
-Gridap.Geometry.get_grid(pg::PlotGrid) = pg.grid
-
 setup_color(color::Union{Symbol, Makie.Colorant}, ::Grid) = color
 
 function setup_color(color::AbstractArray, grid::Grid)
@@ -28,132 +22,65 @@ function setup_face_color(color::AbstractArray, grid::Grid, face_to_cell)
             end
 end
 
-mesh_theme = Makie.Theme(
-        color      = :pink,
-        colormap   = :bluesreds,
-        shading    = Makie.NoShading,
-        cycle      = nothing
-)
-
-# By merging the default theme for the Mesh type and some attributes whose values we want to impose from mesh_theme
-# (in this case: color, colormap, etc.), we may override the current default theme and use our settings.
-# Note: Makie.Theme() returns an Attributes type.
-@Makie.recipe(PlotGridMesh) do scene
-    merge!(
-        mesh_theme,
-        Makie.default_theme(scene, Makie.Mesh)
-    )
+@Makie.recipe MeshField begin
+    linewidth = @inherit linewidth
+    linecap = @inherit linecap
+    joinstyle = @inherit joinstyle
+    linestyle = nothing
+    miter_limit = @inherit miter_limit
+    cycle      = nothing
+    uv_transform = Makie.automatic
+    matcap = nothing
+    marker = @inherit marker
+    markersize = @inherit markersize
+    strokecolor = @inherit markerstrokecolor
+    strokewidth = @inherit markerstrokewidth
+    glowcolor = (:black, 0.0)
+    glowwidth = 0.0
+    rotation = Makie.Billboard()
+    marker_offset = Makie.Vec3f(0)
+    font = @inherit markerfont
+    distancefield = nothing
+    interpolate = true
+    font = "default"
+    uv_offset_width = (0.0, 0.0, 0.0, 0.0)
+    markerspace = :pixel
+    depthsorting = false
+    Makie.mixin_generic_plot_attributes()...
+    Makie.mixin_colormap_attributes()...
+    Makie.mixin_shading_attributes()...
+    fxaa = false
+    shading    = Makie.NoShading
+    colormap   = :bluesreds
+    color = :pink
 end
 
+Makie.plottype(::Triangulation{<:Any,1}) = Makie.Scatter
+Makie.plottype(::Triangulation{<:Any,1}, ::Any) = Makie.Scatter
+Makie.plottype(::Triangulation) = MeshField
+Makie.plottype(::Triangulation,::Any) = MeshField
+Makie.plottype(c::CellField) = Makie.plottype(get_triangulation(c),c)
+Makie.args_preferred_axis(::Triangulation{<:Any,Dp}) where Dp = Dp<=2 ? Makie.Axis : Makie.LScene
 
-# The lift function is necessary when dealing with reactive attributes or Observables.
-#function Makie.plot!(plot::Makie.Mesh{<:Tuple{PlotGrid}})
-function Makie.plot!(plot::PlotGridMesh{<:Tuple{PlotGrid}})
-    grid = Makie.lift(get_grid, plot[1])
-    D = num_cell_dims(grid[])
-    if D in (0,1,2)
-      color = Makie.lift(setup_color, plot[:color], grid)
-      mesh = Makie.lift(to_plot_dg_mesh, grid)
-    elseif D == 3
-      face_grid_and_map = Makie.lift(to_face_grid_with_map, grid)
-      face_grid = Makie.lift(first, face_grid_and_map)
-      face_to_cell = Makie.lift(i->i[2], face_grid_and_map)
-      face_color = Makie.lift(setup_face_color, plot[:color], grid, face_to_cell)
-      mesh = Makie.lift(m->m|>to_plot_dg_mesh|>GeometryBasics.normal_mesh, face_grid)
-      color = Makie.lift(setup_color, face_color, face_grid)
-    else
-      @unreachable
-    end
-
-    # plot.attributes.attributes returns a Dict{Symbol, Observable} to be called by any function.
-    # plot.attributes returns an Attributes type.
-    if D in (2,3)
-        valid_attributes = Makie.shared_attributes(plot,Makie.Mesh)
-        valid_attributes[:color] = color
-        Makie.mesh!(plot, valid_attributes, mesh)
-    elseif D == 1
-        valid_attributes = Makie.shared_attributes(plot,Makie.LineSegments)
-        valid_attributes[:color] = color
-        Makie.linesegments!(plot, valid_attributes, mesh )
-    elseif D == 0
-        valid_attributes = Makie.shared_attributes(plot,Makie.Scatter)
-        valid_attributes[:color] = color
-        Makie.scatter!(plot, valid_attributes, mesh )
-    else
-        @unreachable
-    end
-end
-
-# No need to create discontinuous meshes for wireframe and scatter.
-function Makie.convert_arguments(::Type{<:Makie.Wireframe}, pg::PlotGrid)
-    grid = get_grid(pg)
+function Makie.convert_arguments(::Type{<:Makie.Wireframe}, trian::Triangulation)
+    grid = to_grid(trian)
     mesh = to_plot_mesh(grid)
     (mesh, )
 end
 
-function Makie.convert_arguments(::Type{<:Makie.Scatter}, pg::PlotGrid)
-    grid = get_grid(pg)
+function Makie.convert_arguments(::Type{<:Makie.Scatter}, trian::Triangulation)
+    grid = to_grid(trian)
     node_coords = get_node_coordinates(grid)
     x = map(to_point, node_coords)
     (x, )
 end
 
-function Makie.convert_arguments(::Type{PlotGridMesh}, trian::Triangulation)
-    grid = to_grid(trian)
-    (PlotGrid(grid), )
+function Makie.convert_arguments(::Type{<:MeshField}, c::CellField)
+    (get_triangulation(c), c)
 end
 
-function Makie.convert_arguments(t::Type{<:Union{Makie.Wireframe, Makie.Scatter}}, trian::Triangulation)
-    grid = to_grid(trian)
-    Makie.convert_arguments(t, PlotGrid(grid))
-end
-
-# Set default plottype as mesh if argument is type Triangulation, i.e., mesh(Ω) == plot(Ω).
-Makie.plottype(::Triangulation{Dc,1}) where Dc = Makie.Scatter
-Makie.plottype(::Triangulation{Dc,Dp}) where {Dc,Dp} = PlotGridMesh
-Makie.args_preferred_axis(t::Triangulation)= num_point_dims(t)<=2 ? Makie.Axis : Makie.LScene
-Makie.plottype(::PlotGrid) = PlotGridMesh
-Makie.args_preferred_axis(pg::PlotGrid)= num_point_dims(pg.Grid)<=2 ? Makie.Axis : Makie.LScene
-
-@Makie.recipe(MeshField) do scene
-    merge!(
-        mesh_theme,
-        Makie.default_theme(scene, Makie.Mesh)
-    )
-end
-
-# We explicitly set the colorrange property of p to (min, max) of the color provided. Here, when we use mesh(),
-# Makie fills the attribute plots of p (p.plots) with the given attributes. Hence, p.plots[1] inherits the colorrange
-# of p (this is just to draw colorbars). Another way would be using $ Colorbar(fig[1,2], plt.plots[1]), but quite less
-# appealing from the point of view of the user.
-function Makie.plot!(p::MeshField{<:Tuple{Triangulation, Any}})
-    trian, uh = p[1:2]
-    grid_and_data = Makie.lift(to_grid, trian, uh)
-    pg = Makie.lift(i->PlotGrid(i[1]), grid_and_data)
-    p[:color] = Makie.lift(i->i[2], grid_and_data)
-    if p[:colorrange][] === Makie.automatic
-        p[:colorrange] = Makie.lift(extrema, p[:color])
-    end
-    Makie.plot!(p, pg;
-        p.attributes.attributes...
-    )
-end
-
-Makie.plottype(::Triangulation{Dc,1}, ::Any) where Dc = Makie.Scatter
-Makie.plottype(::Triangulation{Dc,Dp}, ::Any) where {Dc,Dp} = MeshField
-
-function Makie.plot!(p::MeshField{<:Tuple{CellField}})
-    uh = p[1]
-    trian = Makie.lift(get_triangulation, uh)
-    grid_and_data = Makie.lift(to_grid, trian, uh)
-    pg = Makie.lift(i->PlotGrid(i[1]), grid_and_data)
-    p[:color] = Makie.lift(i->i[2], grid_and_data)
-    if p[:colorrange][] === Makie.automatic
-        p[:colorrange] = Makie.lift(extrema, p[:color])
-    end
-    Makie.plot!(p, pg;
-        p.attributes.attributes...
-    )
+function Makie.convert_arguments(::Type{<:MeshField}, trian::Triangulation)
+    (trian,[])
 end
 
 function Makie.convert_arguments(::Union{Type{Makie.Lines},Type{Makie.ScatterLines},Type{Makie.Scatter}}, c::CellField)
@@ -161,7 +88,7 @@ function Makie.convert_arguments(::Union{Type{Makie.Lines},Type{Makie.ScatterLin
     if num_point_dims(trian)==1
         return to_point1D(trian, c)
     else
-        ArgumentError("This function requires a 1D CellField")
+        @unreachable
     end
 end
 
@@ -169,9 +96,55 @@ function Makie.convert_arguments(::Union{Type{Makie.Lines},Type{Makie.ScatterLin
     return to_point1D(trian, uh)
 end
 
-Makie.plottype(c::CellField) = Makie.plottype(get_triangulation(c),c)
-Makie.args_preferred_axis(c::CellField)= Makie.args_preferred_axis(get_triangulation(c))
+function Makie.plot!(p::MeshField{<:Tuple{Triangulation{Dc,<:Any}, Any}}) where Dc
+    map!(p.attributes,[:converted_1,:converted_2,:color],[:newcolor,:mesh]) do trian,uh,c
+        if (Dc<3)
+            if (uh==[])
+                grid=to_grid(trian)
+                mesh=to_plot_dg_mesh(grid)
+                color=setup_color(c,grid)
+            else
+                grid_and_data=to_grid(trian,uh)
+                mesh=to_plot_dg_mesh(grid_and_data[1])
+                color0=grid_and_data[2]
+                color=setup_color(color0,grid_and_data[1])
+            end
+        elseif (Dc==3)
+            if (uh==[])
+                grid=to_grid(trian)
+                face_grid_and_map = to_face_grid_with_map(grid)
+                face_grid_and_map = to_face_grid_with_map(grid)
+                face_grid = face_grid_and_map[1]
+                face_to_cell = face_grid_and_map[2]
+                face_color = setup_face_color(c, grid, face_to_cell)
+                mesh = face_grid |> to_plot_dg_mesh |> GeometryBasics.normal_mesh
+                color = setup_color(face_color, face_grid)
+            else
+                grid_and_data=to_grid(trian,uh)
+                color0=grid_and_data[2]
+                grid = grid_and_data[1]
+                face_grid_and_map = to_face_grid_with_map(grid)
+                face_grid = face_grid_and_map[1]
+                face_to_cell = face_grid_and_map[2]
+                face_color = setup_face_color(color0, grid, face_to_cell)
+                mesh = face_grid |> to_plot_dg_mesh |> GeometryBasics.normal_mesh
+                color = setup_color(face_color, face_grid)
+            end
+        else
+            @unreachable
+        end
+        return (color,mesh)
+    end
 
-function Makie.point_iterator(pg::PlotGrid)
-    UnstructuredGrid(pg.grid) |> to_dg_points
+    if Dc==0
+        Makie.scatter!(p, p.attributes, p.mesh, color=p.newcolor)
+    elseif Dc==1
+        Makie.linesegments!(p, p.attributes, p.mesh,color=p.newcolor)
+    elseif Dc==2
+        Makie.mesh!(p, p.attributes, p.mesh,color=p.newcolor)
+    elseif Dc==3
+        Makie.mesh!(p, p.attributes, p.mesh,color=p.newcolor)
+    else
+        @unreachable
+    end
 end
