@@ -40,6 +40,12 @@ end
         plot!(Γ,uh,color=:red)
         fig
     end
+    @test savefig("1d_Fig3") do
+        fig=plot(Ω,color=:black)
+        plot!(Γ,color=:red,marker=:xcross,markersize=15)
+        fig
+    end
+
 end
 
 @testset "Tests 2D" begin
