@@ -65,6 +65,7 @@ end
     @test savefig("2d_Fig1") do
         fig = plot(Ω)
         wireframe!(Ω, linestyle=:dash, color=:black)
+		plot!(Γ,color=:blue,linewidth=5)
         scatter!(Ω, markersize=10, marker=:diamond, color=:brown2)
         fig
     end
