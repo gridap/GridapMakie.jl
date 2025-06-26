@@ -79,10 +79,6 @@ function Makie.convert_arguments(::Type{<:MeshField}, c::CellField)
     (get_triangulation(c), c)
 end
 
-function Makie.convert_arguments(::Type{<:MeshField}, trian::Triangulation)
-    (trian,[])
-end
-
 function Makie.convert_arguments(::Union{Type{Makie.Lines},Type{Makie.ScatterLines},Type{Makie.Scatter}}, c::CellField)
     trian=get_triangulation(c)
     if num_point_dims(trian)==1
@@ -92,59 +88,113 @@ function Makie.convert_arguments(::Union{Type{Makie.Lines},Type{Makie.ScatterLin
     end
 end
 
-function Makie.convert_arguments(::Union{Type{Makie.Lines},Type{Makie.ScatterLines},Type{Makie.Scatter}}, trian::Triangulation{Dc,1}, uh::Any=x->0.0) where Dc
+function Makie.convert_arguments(::Union{Type{Makie.Lines},Type{Makie.ScatterLines},Type{Makie.Scatter}}, trian::Triangulation{Dc,1}, uh::Any) where Dc
     return to_point1D(trian, uh)
 end
 
-function Makie.plot!(p::MeshField{<:Tuple{Triangulation{Dc,<:Any}, Any}}) where Dc
-    map!(p.attributes,[:converted_1,:converted_2,:color],[:newcolor,:mesh]) do trian,uh,c
-        if (Dc<3)
-            if (uh==[])
-                grid=to_grid(trian)
-                mesh=to_plot_dg_mesh(grid)
-                color=setup_color(c,grid)
-            else
-                grid_and_data=to_grid(trian,uh)
-                mesh=to_plot_dg_mesh(grid_and_data[1])
-                color0=grid_and_data[2]
-                color=setup_color(color0,grid_and_data[1])
-            end
-        elseif (Dc==3)
-            if (uh==[])
-                grid=to_grid(trian)
-                face_grid_and_map = to_face_grid_with_map(grid)
-                face_grid_and_map = to_face_grid_with_map(grid)
-                face_grid = face_grid_and_map[1]
-                face_to_cell = face_grid_and_map[2]
-                face_color = setup_face_color(c, grid, face_to_cell)
-                mesh = face_grid |> to_plot_dg_mesh |> GeometryBasics.normal_mesh
-                color = setup_color(face_color, face_grid)
-            else
-                grid_and_data=to_grid(trian,uh)
-                color0=grid_and_data[2]
-                grid = grid_and_data[1]
-                face_grid_and_map = to_face_grid_with_map(grid)
-                face_grid = face_grid_and_map[1]
-                face_to_cell = face_grid_and_map[2]
-                face_color = setup_face_color(color0, grid, face_to_cell)
-                mesh = face_grid |> to_plot_dg_mesh |> GeometryBasics.normal_mesh
-                color = setup_color(face_color, face_grid)
-            end
-        else
-            @unreachable
-        end
+function Makie.convert_arguments(::Union{Type{Makie.Lines},Type{Makie.ScatterLines},Type{Makie.Scatter}}, trian::Triangulation{Dc,1}) where Dc
+    return to_point1D(trian)
+end
+
+function Makie.plot!(p::MeshField{<:Tuple{Triangulation{0,<:Any}, Any}})
+    map!(p.attributes,[:converted_1,:converted_2],[:newcolor,:mesh]) do trian,uh
+        grid_and_data=to_grid(trian,uh)
+        mesh=to_plot_dg_mesh(grid_and_data[1])
+        color0=grid_and_data[2]
+        color=setup_color(color0,grid_and_data[1])
         return (color,mesh)
     end
-
-    if Dc==0
-        Makie.scatter!(p, p.attributes, p.mesh, color=p.newcolor)
-    elseif Dc==1
-        Makie.linesegments!(p, p.attributes, p.mesh,color=p.newcolor)
-    elseif Dc==2
-        Makie.mesh!(p, p.attributes, p.mesh,color=p.newcolor)
-    elseif Dc==3
-        Makie.mesh!(p, p.attributes, p.mesh,color=p.newcolor)
-    else
-        @unreachable
-    end
+    Makie.scatter!(p, p.attributes, p.mesh,color=p.newcolor)
 end
+
+function Makie.plot!(p::MeshField{<:Tuple{Triangulation{1,<:Any}, Any}})
+    map!(p.attributes,[:converted_1,:converted_2],[:newcolor,:mesh]) do trian,uh
+        grid_and_data=to_grid(trian,uh)
+        mesh=to_plot_dg_mesh(grid_and_data[1])
+        color0=grid_and_data[2]
+        color=setup_color(color0,grid_and_data[1])
+        return (color,mesh)
+    end
+    Makie.linesegments!(p, p.attributes, p.mesh,color=p.newcolor)
+end
+
+function Makie.plot!(p::MeshField{<:Tuple{Triangulation{2,<:Any}, Any}})
+    map!(p.attributes,[:converted_1,:converted_2],[:newcolor,:mesh]) do trian,uh
+        grid_and_data=to_grid(trian,uh)
+        mesh=to_plot_dg_mesh(grid_and_data[1])
+        color0=grid_and_data[2]
+        color=setup_color(color0,grid_and_data[1])
+        return (color,mesh)
+    end
+    Makie.mesh!(p, p.attributes, p.mesh,color=p.newcolor)
+end
+
+function Makie.plot!(p::MeshField{<:Tuple{Triangulation{3,<:Any}, Any}})
+    map!(p.attributes,[:converted_1,:converted_2],[:newcolor,:mesh]) do trian,uh
+        grid_and_data=to_grid(trian,uh)
+        color0=grid_and_data[2]
+        grid = grid_and_data[1]
+        face_grid_and_map = to_face_grid_with_map(grid)
+        face_grid = face_grid_and_map[1]
+        face_to_cell = face_grid_and_map[2]
+        face_color = setup_face_color(color0, grid, face_to_cell)
+        mesh = face_grid |> to_plot_dg_mesh |> GeometryBasics.normal_mesh
+        color = setup_color(face_color, face_grid)
+        return (color,mesh)
+    end
+    Makie.mesh!(p, p.attributes, p.mesh,color=p.newcolor)
+end
+
+function Makie.plot!(p::MeshField{<:Tuple{Triangulation{0,<:Any}}})
+    map!(p.attributes,[:converted_1,:color],[:newcolor,:mesh]) do trian,c
+        grid=to_grid(trian)
+        mesh=to_plot_dg_mesh(grid)
+        color=setup_color(c,grid)
+        return (color,mesh)
+    end
+    Makie.scatter!(p, p.attributes, p.mesh,color=p.newcolor)
+end
+
+function Makie.plot!(p::MeshField{<:Tuple{Triangulation{1,<:Any}}})
+    map!(p.attributes,[:converted_1,:color],[:newcolor,:mesh]) do trian,c
+        grid=to_grid(trian)
+        mesh=to_plot_dg_mesh(grid)
+        color=setup_color(c,grid)
+        return (color,mesh)
+    end
+    Makie.linesegments!(p, p.attributes, p.mesh,color=p.newcolor)
+end
+
+function Makie.plot!(p::MeshField{<:Tuple{Triangulation{2,<:Any}}})
+    map!(p.attributes,[:converted_1,:color],[:newcolor,:mesh]) do trian,c
+        grid=to_grid(trian)
+        mesh=to_plot_dg_mesh(grid)
+        color=setup_color(c,grid)
+        return (color,mesh)
+    end
+    Makie.mesh!(p, p.attributes, p.mesh,color=p.newcolor)
+end
+
+function Makie.plot!(p::MeshField{<:Tuple{Triangulation{3,<:Any}}})
+    map!(p.attributes,[:converted_1,:color],[:newcolor,:mesh]) do trian,c
+        grid=to_grid(trian)
+        face_grid_and_map = to_face_grid_with_map(grid)
+        face_grid_and_map = to_face_grid_with_map(grid)
+        face_grid = face_grid_and_map[1]
+        face_to_cell = face_grid_and_map[2]
+        face_color = setup_face_color(c, grid, face_to_cell)
+        mesh = face_grid |> to_plot_dg_mesh |> GeometryBasics.normal_mesh
+        color = setup_color(face_color, face_grid)
+        return (color,mesh)
+    end
+    Makie.mesh!(p, p.attributes, p.mesh,color=p.newcolor)
+end
+
+function Makie.plot!(p::MeshField{<:Tuple{Triangulation, Any}})
+    @unreachable
+end
+
+function Makie.plot!(p::MeshField{<:Tuple{Triangulation}})
+    @unreachable
+end
+
