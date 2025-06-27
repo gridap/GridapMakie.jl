@@ -40,6 +40,12 @@ end
         plot!(Γ,uh,color=:red)
         fig
     end
+    @test savefig("1d_Fig3") do
+        fig=plot(Ω,color=:black)
+        plot!(Γ,color=:red,marker=:xcross,markersize=15)
+        fig
+    end
+
 end
 
 @testset "Tests 2D" begin
@@ -59,6 +65,7 @@ end
     @test savefig("2d_Fig1") do
         fig = plot(Ω)
         wireframe!(Ω, linestyle=:dash, color=:black)
+		plot!(Γ,color=:blue,linewidth=5)
         scatter!(Ω, markersize=10, marker=:diamond, color=:brown2)
         fig
     end

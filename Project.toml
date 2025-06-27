@@ -1,7 +1,7 @@
 name = "GridapMakie"
 uuid = "41f30b06-6382-4b60-a5f7-79d86b35bf5d"
 authors = ["Alberto F. Martín <alberto.f.martin@anu.edu.au>", "Eric Neiva <eneiva@cimne.upc.edu>", "Pau Riera <pau.riera.p@gmail.com>", "Francesc Verdugo <fverdugo@cimne.upc.edu>", "Jan Weidner <jw3126@gmail.com>", "Other contributors"]
-version = "0.1.6"
+version = "0.1.7"
 
 [deps]
 FileIO = "5789e2e9-d7fb-5bc7-8068-2c6fae9b9549"
@@ -14,10 +14,10 @@ Makie = "ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a"
 [compat]
 FileIO = "1"
 FillArrays = "1"
-GLMakie = "0.11,0.12"
+GLMakie = "0.13"
 GeometryBasics = "0.5"
 Gridap = "0.16, 0.17, 0.18, 0.19"
-Makie = "0.22,0.23"
+Makie = "0.24"
 julia = "1.6"
 
 [extras]
