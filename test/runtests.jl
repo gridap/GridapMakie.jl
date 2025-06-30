@@ -5,8 +5,6 @@ using Gridap
 using GLMakie
 using Test
 
-import FileIO
-
 const OUTDIR = joinpath(@__DIR__, "output")
 rm(OUTDIR, force=true, recursive=true)
 mkpath(OUTDIR)
@@ -17,7 +15,7 @@ function savefig(f, suffix::String)
     filename = "$(suffix).png"
     @show filename
     path = joinpath(OUTDIR, filename)
-    FileIO.save(path, fig)
+    save(path, fig)
     return true
 end
 
