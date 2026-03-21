@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Updated to support Gridap 0.20
 - Remove FileIO dependency
+- Raise Julia minimum compatibility to 1.10
 
 ## [0.1.7] - 2025-06-25
 
