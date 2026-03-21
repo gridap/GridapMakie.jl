@@ -28,22 +28,20 @@ A significant part of this package has been developed in the framework of the Go
 
 ## Installation
 
-According to Makie's guidelines, it is enough to install one of its backends, e.g. GLMakie. Additionally, Gridap provides the plot objects
-to be visualized and `FileIO` allows to save the figures plotted.
+According to Makie's guidelines, it is enough to install one of its backends, e.g. GLMakie.
 
 ```julia
 julia> ]
-pkg> add Gridap, GridapMakie, GLMakie, FileIO
+pkg> add Gridap, GridapMakie, GLMakie
 ```
 
 ## Examples
 
-First things first, we shall be using the three packages as well as `FileIO`.
+First things first, we shall be using the three packages.
 We may as well create directories to store downloaded meshes and output files
 
 ````julia
 using Gridap, GridapMakie, GLMakie
-using FileIO
 mkdir("models")
 mkdir("images")
 ````
@@ -157,7 +155,11 @@ take the mesh from the [first Gridap tutorial](https://gridap.github.io/Tutorial
 which can be downloaded using
 
 ````julia
-url = "https://github.com/gridap/GridapMakie.jl/raw/d5d74190e68bd310483fead8a4154235a61815c5/_readme/model.json"
+if pkgversion(Gridap)<v"0.19.8"
+    url = "https://github.com/gridap/GridapMakie.jl/raw/d5d74190e68bd310483fead8a4154235a61815c5/_readme/model.json"
+else
+    url = "https://github.com/gridap/GridapMakie.jl/raw/d5d74190e68bd310483fead8a4154235a61815c5/_readme/model_0.16.json"
+end
 download(url,"models/model.json")
 ````
 

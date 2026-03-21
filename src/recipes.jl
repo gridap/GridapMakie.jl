@@ -23,36 +23,12 @@ function setup_face_color(color::AbstractArray, grid::Grid, face_to_cell)
 end
 
 @Makie.recipe MeshField begin
-    linewidth = @inherit linewidth
-    linecap = @inherit linecap
-    joinstyle = @inherit joinstyle
-    linestyle = nothing
-    miter_limit = @inherit miter_limit
-    cycle      = nothing
-    uv_transform = Makie.automatic
-    matcap = nothing
-    marker = @inherit marker
-    markersize = @inherit markersize
-    strokecolor = @inherit markerstrokecolor
-    strokewidth = @inherit markerstrokewidth
-    glowcolor = (:black, 0.0)
-    glowwidth = 0.0
-    rotation = Makie.Billboard()
-    marker_offset = Makie.Vec3f(0)
-    font = @inherit markerfont
-    distancefield = nothing
-    interpolate = true
-    font = "default"
-    uv_offset_width = (0.0, 0.0, 0.0, 0.0)
-    markerspace = :pixel
-    depthsorting = false
-    Makie.mixin_generic_plot_attributes()...
-    Makie.mixin_colormap_attributes()...
-    Makie.mixin_shading_attributes()...
+    Makie.DocumentedAttributes(merge(Makie.documented_attributes(Makie.Mesh).d,Makie.documented_attributes(Makie.LineSegments).d,Makie.documented_attributes(Makie.Scatter).d))...
     fxaa = false
     shading    = Makie.NoShading
     colormap   = :bluesreds
     color = :pink
+    cycle      = nothing
 end
 
 Makie.plottype(::Triangulation{<:Any,1}) = Makie.Scatter
@@ -61,6 +37,11 @@ Makie.plottype(::Triangulation) = MeshField
 Makie.plottype(::Triangulation,::Any) = MeshField
 Makie.plottype(c::CellField) = Makie.plottype(get_triangulation(c),c)
 Makie.args_preferred_axis(::Triangulation{<:Any,Dp}) where Dp = Dp<=2 ? Makie.Axis : Makie.LScene
+
+function Makie.convert_arguments(::Type{<:Makie.Wireframe}, trian::Triangulation{<:Any,1})
+    x=to_point1D(trian)
+    return (x[1],x[2],zeros(length(x[1]),length(x[1])))
+end
 
 function Makie.convert_arguments(::Type{<:Makie.Wireframe}, trian::Triangulation)
     grid = to_grid(trian)
@@ -79,20 +60,15 @@ function Makie.convert_arguments(::Type{<:MeshField}, c::CellField)
     (get_triangulation(c), c)
 end
 
-function Makie.convert_arguments(::Union{Type{Makie.Lines},Type{Makie.ScatterLines},Type{Makie.Scatter}}, c::CellField)
-    trian=get_triangulation(c)
-    if num_point_dims(trian)==1
-        return to_point1D(trian, c)
-    else
-        @unreachable
-    end
+function Makie.convert_arguments(t::Union{Type{Makie.Lines},Type{Makie.ScatterLines},Type{Makie.Scatter}}, c::CellField)
+    Makie.convert_arguments(t,get_triangulation(c), c)
 end
 
-function Makie.convert_arguments(::Union{Type{Makie.Lines},Type{Makie.ScatterLines},Type{Makie.Scatter}}, trian::Triangulation{Dc,1}, uh::Any) where Dc
+function Makie.convert_arguments(::Union{Type{Makie.Lines},Type{Makie.ScatterLines},Type{Makie.Scatter}}, trian::Triangulation{<:Any,1}, uh::Any)
     return to_point1D(trian, uh)
 end
 
-function Makie.convert_arguments(::Union{Type{Makie.Lines},Type{Makie.ScatterLines},Type{Makie.Scatter}}, trian::Triangulation{Dc,1}) where Dc
+function Makie.convert_arguments(::Union{Type{Makie.Lines},Type{Makie.ScatterLines},Type{Makie.Scatter}}, trian::Triangulation{<:Any,1})
     return to_point1D(trian)
 end
 
@@ -190,11 +166,11 @@ function Makie.plot!(p::MeshField{<:Tuple{Triangulation{3,<:Any}}})
     Makie.mesh!(p, p.attributes, p.mesh,color=p.newcolor)
 end
 
-function Makie.plot!(p::MeshField{<:Tuple{Triangulation, Any}})
+function Makie.plot!(::MeshField{<:Tuple{Triangulation, Any}})
     @unreachable
 end
 
-function Makie.plot!(p::MeshField{<:Tuple{Triangulation}})
+function Makie.plot!(::MeshField{<:Tuple{Triangulation}})
     @unreachable
 end
 
