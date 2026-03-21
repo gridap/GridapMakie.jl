@@ -155,7 +155,11 @@ take the mesh from the [first Gridap tutorial](https://gridap.github.io/Tutorial
 which can be downloaded using
 
 ````julia
-url = "https://github.com/gridap/GridapMakie.jl/raw/d5d74190e68bd310483fead8a4154235a61815c5/_readme/model.json"
+if pkgversion(Gridap)<v"0.19.8"
+    url = "https://github.com/gridap/GridapMakie.jl/raw/d5d74190e68bd310483fead8a4154235a61815c5/_readme/model.json"
+else
+    url = "https://github.com/gridap/GridapMakie.jl/raw/d5d74190e68bd310483fead8a4154235a61815c5/_readme/model_0.16.json"
+end
 download(url,"models/model.json")
 ````
 
